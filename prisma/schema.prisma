@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum GoalPath {
+  python_for_ai_workflows
+}
+
+enum CurrentLevel {
+  zero
+  some_programming
+}
+
+enum PaceMode {
+  default
+  lighter
+  slower
+}
+
+enum PlanStatus {
+  active
+  completed
+}
+
+enum MilestoneStatus {
+  pending
+  active
+  completed
+}
+
+enum LessonStatus {
+  pending
+  active
+  completed
+  archived
+}
+
+enum TaskStatus {
+  pending
+  completed
+  skipped
+}
+
+enum QuizKind {
+  single_choice
+  true_false
+}
+
+enum ReplanReason {
+  too_hard
+  pace_too_fast
+  wrong_goal
+  inactive
+}
+
+model User {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  learningProfile LearningProfile?
+  plans           Plan[]
+}
+
+model LearningProfile {
+  id                      String       @id @default(cuid())
+  userId                  String       @unique
+  currentLevel            CurrentLevel
+  weeklyTimeBudgetMinutes Int
+  targetDeadline          DateTime
+  mbti                    String?
+  paceMode                PaceMode     @default(default)
+  goalText                String
+  goalPath                GoalPath?
+  user                    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Plan {
+  id                    String      @id @default(cuid())
+  userId                String
+  goalPath              GoalPath
+  status                PlanStatus  @default(active)
+  targetStartDate       DateTime
+  targetEndDate         DateTime
+  currentMilestoneIndex Int         @default(1)
+  daysInactiveCount     Int         @default(0)
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones            Milestone[]
+  lessons               Lesson[]
+}
+
+model Milestone {
+  id      String          @id @default(cuid())
+  planId  String
+  index   Int
+  title   String
+  outcome String
+  status  MilestoneStatus @default(pending)
+  plan    Plan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@unique([planId, index])
+}
+
+model Lesson {
+  id                  String               @id @default(cuid())
+  planId              String
+  milestoneId         String
+  dayIndex            Int
+  title               String
+  whyItMatters        String
+  completionCriteria  String
+  status              LessonStatus         @default(pending)
+  regenerationCount   Int                  @default(0)
+  generatedFromReason ReplanReason?
+  createdAt           DateTime             @default(now())
+  plan                Plan                 @relation(fields: [planId], references: [id], onDelete: Cascade)
+  milestone           Milestone            @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  tasks               AtomicTask[]
+  quiz                Quiz?
+  feedbackEvents      LessonFeedbackEvent[]
+}
+
+model AtomicTask {
+  id               String     @id @default(cuid())
+  lessonId         String
+  orderIndex       Int
+  title            String
+  instructions     String
+  estimatedMinutes Int
+  status           TaskStatus @default(pending)
+  lesson           Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, orderIndex])
+}
+
+model Quiz {
+  id            String   @id @default(cuid())
+  lessonId      String   @unique
+  kind          QuizKind
+  question      String
+  optionsJson   String
+  correctAnswer String
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model LessonFeedbackEvent {
+  id        String       @id @default(cuid())
+  lessonId  String
+  reason    ReplanReason
+  createdAt DateTime     @default(now())
+  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
