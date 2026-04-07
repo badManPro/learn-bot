@@ -75,7 +75,7 @@ export function OnboardingForm() {
         className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-stone-50"
         type="submit"
       >
-        生成我的学习路线
+        开始生成我的学习路线
       </button>
     </form>
   );

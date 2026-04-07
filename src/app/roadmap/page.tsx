@@ -1,11 +1,15 @@
 import Link from "next/link";
 
 import { MilestoneList } from "@/components/roadmap/milestone-list";
-import { getRoadmapPreview } from "@/lib/ai/plan-generator";
+import { ensureCurrentPlanForUser, getRoadmapPreview } from "@/lib/ai/plan-generator";
 import { ROUTES } from "@/lib/routes";
+import { getOrCreateGuestUserId } from "@/lib/session";
 
-export default function RoadmapPage() {
-  const roadmap = getRoadmapPreview();
+export default async function RoadmapPage() {
+  const guestUserId = await getOrCreateGuestUserId();
+  const snapshot = await ensureCurrentPlanForUser(guestUserId);
+  const roadmap = snapshot ?? getRoadmapPreview();
+  const currentLessonId = snapshot?.currentLessonId ?? "lesson_1";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-16">
@@ -24,7 +28,7 @@ export default function RoadmapPage() {
       <div className="mt-10 flex items-center gap-4">
         <Link
           className="inline-flex rounded-full bg-stone-900 px-5 py-3 text-sm font-medium text-white"
-          href={ROUTES.lesson("lesson_1")}
+          href={ROUTES.lesson(currentLessonId)}
         >
           开始今天一课
         </Link>

@@ -6,10 +6,12 @@ import { TaskCard } from "@/components/lesson/task-card";
 
 type LessonShellProps = {
   lesson: LessonPayload;
+  lessonId?: string;
+  regenerationCount?: number;
   regenerationMessage?: string | null;
 };
 
-export function LessonShell({ lesson, regenerationMessage }: LessonShellProps) {
+export function LessonShell({ lesson, lessonId, regenerationCount = 0, regenerationMessage }: LessonShellProps) {
   const [firstTask, ...remainingTasks] = lesson.tasks;
 
   return (
@@ -23,6 +25,28 @@ export function LessonShell({ lesson, regenerationMessage }: LessonShellProps) {
       {regenerationMessage ? (
         <div className="mt-8">
           <RegenerationBanner message={regenerationMessage} />
+        </div>
+      ) : null}
+
+      {lessonId ? (
+        <div className="mt-8 flex items-start justify-between gap-6 rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-sm font-medium text-amber-950">如果这节课太难，可以直接请求更轻量的版本。</p>
+            <p className="text-sm leading-6 text-amber-900">
+              系统会保留当前里程碑，只缩小任务范围并补一点前置说明。
+            </p>
+          </div>
+          <form action="/api/lesson/regenerate" className="space-y-3" method="post">
+            <input name="lessonId" type="hidden" value={lessonId} />
+            <input name="reason" type="hidden" value="too_hard" />
+            <input name="regenerationCount" type="hidden" value={String(regenerationCount)} />
+            <button
+              className="rounded-full border border-amber-300 bg-amber-100 px-5 py-3 text-sm font-medium text-amber-950 transition hover:bg-amber-200"
+              type="submit"
+            >
+              太难了，帮我简化
+            </button>
+          </form>
         </div>
       ) : null}
 

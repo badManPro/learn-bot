@@ -21,8 +21,9 @@ function normalizePayload(payload: Record<string, FormDataEntryValue | unknown>)
 
 export async function POST(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
+  const expectsJson = contentType.includes("application/json");
 
-  const rawPayload = contentType.includes("application/json")
+  const rawPayload = expectsJson
     ? ((await request.json()) as Record<string, unknown>)
     : Object.fromEntries(await request.formData());
 
@@ -70,8 +71,16 @@ export async function POST(request: Request) {
     }
   });
 
+  const redirectTo = goalMapping.supportStatus === "supported" ? ROUTES.roadmap : ROUTES.unsupported;
+
+  if (!expectsJson) {
+    const response = NextResponse.redirect(request.url, 303);
+    response.headers.set("location", redirectTo);
+    return response;
+  }
+
   return NextResponse.json({
     status: "ok",
-    redirectTo: goalMapping.supportStatus === "supported" ? ROUTES.roadmap : ROUTES.unsupported
+    redirectTo
   });
 }

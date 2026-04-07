@@ -48,6 +48,17 @@
 - `src/lib/ai/plan-generator.ts` now resolves an effective pace mode before generating the first lesson, but still keeps the roadmap fixed at 3 milestones.
 - `src/lib/ai/lesson-generator.ts` now changes only task granularity and load by pace mode: `lighter` compresses the work, `slower` breaks it into more smaller tasks, and `default` keeps the original shape.
 - `/api/plan/replan` now applies the chosen replan result to the active plan and learning profile, and `/replan` exposes the option set in the UI.
+- Task 10 starts from a partly wired UI state: the onboarding form submits directly to `/api/onboarding`, but that route currently returns JSON for form posts instead of redirecting to `/roadmap`.
+- The lesson page still renders preview data only and does not expose a user-triggerable lesson regeneration action, even though `/api/lesson/regenerate` and the regeneration banner already exist.
+- `package.json` already includes `@playwright/test` and a `test:e2e` script, but the repo does not yet contain `playwright.config.ts`, any `tests/e2e` specs, or a project `README.md`.
+- The smallest Task 10-complete shape is: add Playwright config plus two smoke specs, make form-post onboarding redirect and preserve the guest cookie path, and add a visible lesson regeneration button flow that can hit the existing regeneration API.
+- The first Task 10 root cause was host drift during onboarding: the form-post redirect changed the browser from `127.0.0.1` to `localhost`, so the host-only `guest_user_id` cookie was not sent to `/roadmap`, and no `Plan` or `Lesson` could be created.
+- Task 10 is now complete: `playwright.config.ts`, `tests/e2e/onboarding-to-roadmap.spec.ts`, `tests/e2e/lesson-regeneration.spec.ts`, and `README.md` all exist and are wired into the project.
+- `/api/onboarding` now returns a relative redirect for form posts, which keeps the guest cookie on the same host and lets `/roadmap` bootstrap the active plan for that guest user.
+- `/roadmap` now uses the current guest profile to ensure a real plan exists and links to the actual current `lessonId` instead of the preview-only `lesson_1`.
+- `/lesson/[lessonId]` now loads persisted lesson, task, and quiz data from Prisma, and shows regeneration state when `regenerationCount > 0`.
+- The lesson regeneration trigger now uses a server-handled HTML form POST instead of a client-only click handler; the client path proved hydration-dependent and could miss the request under E2E timing.
+- `vitest.config.ts` now scopes test collection to `tests/unit/**` and excludes `tests/e2e/**`, preventing Vitest from pulling in Playwright specs and dependency test files.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -70,6 +81,10 @@
 | Keep Task 9 focused on deterministic replan math and pacing rules | The implementation plan only asks for continue/light/rearrange options and light MBTI effects |
 | Reuse `paceMode` as the single pacing switch across onboarding, plan generation, and lessons | This avoids introducing a second parallel pacing concept |
 | Keep `replan` persistence lightweight in Task 9 | Updating the active plan deadline and profile pace mode is enough to satisfy the current batch without inventing a full review-lesson scheduler |
+| Make the onboarding redirect relative for form posts | Same-host navigation is required to preserve the `guest_user_id` cookie in local E2E runs |
+| Bootstrap the real plan on `/roadmap` instead of inventing a separate Task 10 API hop | The plan and current lesson id already exist in server code, so this is the smallest glue layer |
+| Prefer a server form submission for lesson regeneration | It removes hydration timing from the critical path and keeps the E2E smoke test aligned with real browser behavior |
+| Restrict Vitest to unit tests only | Adding E2E coverage should not break the unit runner's test discovery |
 
 ## Issues Encountered
 | Issue | Resolution |
@@ -78,6 +93,10 @@
 | `pnpm install` could not reach the registry in sandbox | Re-ran the install with approved escalated network access |
 | Prisma schema engine fails during `db push` with no detail | Confirmed schema validity and reproduced the failure with a minimal schema to isolate the issue to environment/runtime |
 | `db push` still fails after installing Node 22 | Used `prisma migrate diff --script -o ...` and `prisma db execute --file ...` to initialize the SQLite schema |
+| Playwright initially failed before reaching product code | Fixed the `webServer` command, ran E2E outside the sandbox, and installed the Chromium browser binary |
+| Onboarding redirect lost the guest cookie by changing hosts | Changed the route handler to emit `location: /roadmap` for form posts |
+| The first lesson regeneration button path was hydration-dependent | Replaced the client fetch button with a plain form POST to the existing regeneration route |
+| Vitest started collecting E2E files and dependency test suites | Added explicit `include`/`exclude` patterns in `vitest.config.ts` |
 
 ## Resources
 - `/Users/casper/Documents/project/test-skills/docs/plans/2026-04-05-ai-learning-assistant-tech-spec.md`

@@ -352,5 +352,68 @@
 | What have I learned? | The clean Task 9 boundary is: replan changes schedule and pace, while lesson generation alone absorbs the pacing effect |
 | What have I done? | Committed Task 8, completed Task 9, verified the new replan flow, and synced the planning documents again |
 
+### Phase 12: Task 10 Setup and Red State
+- **Status:** complete
+- Actions taken:
+  - Loaded the Task 10 implementation plan and verified that Task 9 was the current handoff point.
+  - Added `playwright.config.ts` plus two smoke specs for onboarding-to-roadmap and lesson regeneration.
+  - Fixed the Playwright `webServer` command and installed the missing Chromium browser binary.
+  - Verified the first red state on onboarding and then drove the second spec to a lesson-regeneration-specific failure.
+- Files created/modified:
+  - `playwright.config.ts` (created)
+  - `tests/e2e/onboarding-to-roadmap.spec.ts` (created)
+  - `tests/e2e/lesson-regeneration.spec.ts` (created)
+  - `findings.md` (updated)
+
+### Phase 12A: Task 10 Implementation
+- **Status:** complete
+- Actions taken:
+  - Updated the onboarding submit button copy to match the written flow and changed form-post onboarding responses from JSON to redirect behavior.
+  - Traced a host mismatch bug where the onboarding redirect switched from `127.0.0.1` to `localhost`, which dropped the host-only guest cookie and prevented plan creation.
+  - Fixed onboarding redirects to stay relative, then wired `/roadmap` to bootstrap the current plan and pass the real current `lessonId`.
+  - Updated `/lesson/[lessonId]` to load persisted Prisma lesson data instead of preview-only data.
+  - Added the lesson regeneration entry point, then replaced its first client-only implementation with a server-handled HTML form after confirming the click path was hydration-dependent under E2E timing.
+  - Added `README.md` with stack, setup, env vars, and run commands.
+  - Tightened `vitest.config.ts` so the unit runner only collects `tests/unit/**`.
+- Files created/modified:
+  - `src/components/onboarding/onboarding-form.tsx` (updated)
+  - `src/app/api/onboarding/route.ts` (updated)
+  - `src/app/roadmap/page.tsx` (updated)
+  - `src/app/lesson/[lessonId]/page.tsx` (updated)
+  - `src/components/lesson/lesson-shell.tsx` (updated)
+  - `src/app/api/lesson/regenerate/route.ts` (updated)
+  - `README.md` (created)
+  - `vitest.config.ts` (updated)
+
+### Phase 13: Task 10 Verification
+- **Status:** complete
+- Actions taken:
+  - Re-ran the full unit suite after fixing Vitest discovery.
+  - Re-ran lint and production build after the new routing and lesson changes.
+  - Generated Prisma Client again to confirm schema/tooling consistency.
+  - Ran the full Playwright smoke suite and confirmed both E2E flows pass.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+## Task 10 Verification Results
+| Check | Command | Actual | Status |
+|------|---------|--------|--------|
+| Prisma Client generation | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm prisma generate` | Prisma Client v6.19.3 generated successfully | ✓ |
+| Full unit suite after Task 10 | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm vitest run` | 15 files passed, 18 tests passed | ✓ |
+| Lint after Task 10 | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm lint` | Exit code 0 | ✓ |
+| Production build after Task 10 | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm build` | Exit code 0, 16 routes built | ✓ |
+| Full Playwright smoke suite | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm playwright test` | 2 tests passed | ✓ |
+
+## 5-Question Reboot Check (Post Task 10)
+| Question | Answer |
+|----------|--------|
+| Where am I? | Task 10 is implemented and freshly verified locally |
+| Where am I going? | The next implementation step is the next task after Task 10 in the written plan |
+| What's the goal? | Keep advancing the AI Learning Assistant MVP through the remaining implementation plan |
+| What have I learned? | The last missing product glue was host-safe onboarding redirects plus a server-driven regeneration path that does not depend on hydration timing |
+| What have I done? | Added Playwright smoke coverage, finished the README, wired roadmap and lesson data to the live guest session, and verified unit, lint, build, Prisma generate, and E2E flows |
+
 ---
 *Update after completing each phase or encountering errors*

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { ReplanReason } from "@prisma/client";
 
 import { regenerateLesson } from "@/lib/ai/lesson-regenerator";
+import { ROUTES } from "@/lib/routes";
 
 const REGENERATION_REASONS = new Set<ReplanReason>(["too_hard", "pace_too_fast", "wrong_goal", "inactive"]);
 
@@ -9,12 +10,21 @@ function parsePayload(payload: Record<string, unknown>) {
   return {
     lessonId: typeof payload.lessonId === "string" ? payload.lessonId : "",
     reason: typeof payload.reason === "string" ? payload.reason : "",
-    regenerationCount: typeof payload.regenerationCount === "number" ? payload.regenerationCount : 0
+    regenerationCount:
+      typeof payload.regenerationCount === "number"
+        ? payload.regenerationCount
+        : typeof payload.regenerationCount === "string"
+          ? Number.parseInt(payload.regenerationCount, 10) || 0
+          : 0
   };
 }
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as Record<string, unknown>;
+  const contentType = request.headers.get("content-type") ?? "";
+  const expectsJson = contentType.includes("application/json");
+  const payload = expectsJson
+    ? ((await request.json()) as Record<string, unknown>)
+    : Object.fromEntries(await request.formData());
   const { lessonId, reason, regenerationCount } = parsePayload(payload);
 
   if (!lessonId || !REGENERATION_REASONS.has(reason as ReplanReason)) {
@@ -41,6 +51,12 @@ export async function POST(request: Request) {
       },
       { status: 404 }
     );
+  }
+
+  if (!expectsJson) {
+    const response = NextResponse.redirect(request.url, 303);
+    response.headers.set("location", ROUTES.lesson(result.lessonId));
+    return response;
   }
 
   return NextResponse.json({

@@ -1,7 +1,7 @@
-# Task Plan: AI Learning Assistant MVP Task 9
+# Task Plan: AI Learning Assistant MVP Task 10
 
 ## Goal
-Execute Task 9 for the AI Learning Assistant MVP by adding inactivity replan and light MBTI pacing, while keeping planning documents aligned with the live repository state.
+Execute Task 10 for the AI Learning Assistant MVP by adding end-to-end smoke coverage, wiring the remaining onboarding and lesson regeneration paths, and finishing the project README.
 
 ## Current Phase
 Phase 5
@@ -14,59 +14,57 @@ Phase 5
 - [x] Document findings in findings.md
 - **Status:** complete
 
-### Phase 2: Planning & Structure
-- [x] Define technical approach
-- [x] Create project structure if needed
-- [x] Document decisions with rationale
+### Phase 2: Test Scaffolding
+- [x] Add Playwright config
+- [x] Add failing onboarding-to-roadmap smoke test
+- [x] Add failing lesson-regeneration smoke test
 - **Status:** complete
 
 ### Phase 3: Implementation
-- [x] Sync planning files to the post-Task-8 repository state
-- [x] Add failing Task 9 tests
-- [x] Implement replan domain logic, API route, and page
-- [x] Connect pace mode derivation into plan and lesson generation without changing milestone structure
+- [x] Fix form-post onboarding redirect and preserve guest cookie continuity
+- [x] Wire roadmap to bootstrap the current user's plan and lesson id
+- [x] Wire lesson page to load persisted lesson data and regeneration state
+- [x] Add a non-hydration-dependent lesson regeneration button path
+- [x] Add README.md with setup, env vars, and run commands
+- [x] Scope Vitest to unit tests after adding E2E coverage
 - **Status:** complete
 
 ### Phase 4: Testing & Verification
-- [x] Run Task 9 verification commands
-- [x] Run relevant regression checks for lesson, roadmap, and completion flows
+- [x] Run Prisma client generation
+- [x] Run full unit suite
+- [x] Run lint
+- [x] Run production build
+- [x] Run full Playwright smoke suite
 - [x] Record results in progress.md
 - **Status:** complete
 
 ### Phase 5: Delivery
 - [x] Summarize what was implemented
 - [x] Highlight blockers or follow-up work
-- [x] Hand off for user feedback before Task 10
+- [x] Hand off the Task 10 completion state
 - **Status:** complete
 
 ## Key Questions
-1. What is the smallest replan flow that satisfies Task 9 without forcing a full progress-tracking rewrite?
-2. How should `paceMode` influence task granularity and cadence without changing the 3-milestone roadmap?
+1. What is the smallest E2E-complete path that proves onboarding reaches roadmap and users can trigger lesson regeneration?
+2. Which wiring gaps should be fixed in product code instead of being papered over in Playwright tests?
 
 ## Decisions Made
 | Decision | Rationale |
 |----------|-----------|
-| Execute the existing implementation plan in batches of three tasks | Matches the executing-plans workflow and keeps checkpoints small |
-| Treat the current docs as sufficiently frozen for v0 implementation | The tech spec defines scope, domain model, AI contracts, API contracts, and file structure |
-| Continue with Task 4 instead of revising docs | The current repo already matches the assumptions created by Task 1 to Task 3 |
-| Track `pnpm-lock.yaml` in git | Locking dependency resolution is useful once the project is bootstrapped |
-| Treat the Prisma `db push` failure as an environment issue first, not a schema bug | `prisma validate` passes and the same failure reproduces with a one-model temporary schema |
-| Pin the project to Node 22 | Node 23 contributed enough uncertainty during Prisma investigation that the project should advertise the supported runtime |
-| Use `prisma migrate diff` plus `prisma db execute` as the current schema bootstrap workaround | `db push` remains broken locally, but Prisma can still generate valid SQL and execute it successfully |
-| Keep Task 4 to Task 6 deterministic and schema-first | The spec explicitly allows a constrained single-path v0 and requires Zod-validated structured payloads |
-| Treat quiz correctness as the lesson completion gate in Task 7 | The implementation plan says the lesson becomes complete when the quiz answer is correct |
-| Sync planning docs before changing code again | The repo state already moved past earlier batches and the planning files had drifted before the last sync |
-| Implement Task 8 by mutating the current lesson in place rather than creating a second lesson record | The plan only requires regeneration, simplified content, and feedback persistence; it does not require version history in v0 |
-| Keep the Task 8 UI surface small | A standalone regeneration banner plus API contract is enough to satisfy the plan without adding speculative client orchestration |
-| Keep Task 9 deterministic and profile-driven | The plan only requires replan options and light MBTI pacing, not open-ended AI scheduling |
-| Apply pacing through existing `paceMode` and lesson payload generation | This keeps milestone structure stable while still changing task granularity and user load |
+| Keep Task 10 focused on real product wiring, not Playwright workarounds | The implementation plan explicitly calls out missing glue code, not just missing tests |
+| Make onboarding form posts return a relative redirect | The previous absolute redirect drifted from `127.0.0.1` to `localhost`, which dropped the host-only guest cookie |
+| Bootstrap the active plan from the roadmap page | This is the smallest place to turn a saved learning profile into a real lesson id without widening Task 10 scope |
+| Render the lesson regeneration action as a server-handled HTML form | The client-only button path was hydration-dependent and flaky under E2E timing |
+| Restrict Vitest to `tests/unit/**` and exclude `tests/e2e/**` | Adding Playwright specs should not cause the unit runner to collect E2E files or third-party tests under `node_modules` |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
 |-------|---------|------------|
-| `pnpm install` failed in sandbox with `ENOTFOUND` | 1 | Re-ran with escalated network permissions and installation succeeded |
-| `pnpm prisma db push` fails with blank `Schema engine error` | 1 | Investigated with `prisma validate`, direct engine checks, and a minimal temporary schema; likely tied to unsupported local Node 23 runtime |
-| `pnpm prisma db push` still fails after switching to Node 22 | 2 | Used Prisma SQL generation plus `db execute` to create the SQLite schema and continued the batch |
+| Playwright `webServer` failed with `Invalid project directory ... /--hostname` | 1 | Switched the config to `pnpm exec next dev --hostname ... --port ...` |
+| Next dev server failed with `listen EPERM` in sandbox | 1 | Re-ran Playwright outside the sandbox for E2E verification |
+| Playwright Chromium executable was missing locally | 1 | Installed the Playwright Chromium browser before rerunning the red tests |
+| Form-post onboarding redirect changed host from `127.0.0.1` to `localhost` | 1 | Replaced the absolute redirect with a relative `location: /roadmap` response |
+| Unit test runner collected Playwright specs and third-party tests | 1 | Added explicit Vitest `include` and `exclude` patterns for `tests/unit/**` only |
 
 ## Notes
 - Re-read this plan before major decisions.
