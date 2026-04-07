@@ -1,0 +1,11 @@
+.next
+coverage
+dist
+node_modules
+playwright-report
+test-results
+*.log
+.env
+.env.local
+dev.db
+dev.db-journal
