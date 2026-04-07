@@ -2,6 +2,7 @@ import type { CurrentLevel, MilestoneStatus, PaceMode, Plan, GoalPath } from "@p
 
 import { db } from "@/lib/db";
 import { generateFirstLessonPayload, type LessonPayload } from "@/lib/ai/lesson-generator";
+import { derivePaceMode } from "@/lib/domain/replan";
 
 export type RoadmapMilestone = {
   index: number;
@@ -55,11 +56,20 @@ function buildMilestones(): RoadmapMilestone[] {
 }
 
 export function generatePlanBlueprint(input: PlanGenerationInput): PlanGenerationOutput {
+  const effectivePaceMode =
+    input.paceMode === "default"
+      ? derivePaceMode({
+          mbti: input.mbti,
+          weeklyTimeBudgetMinutes: input.weeklyTimeBudgetMinutes
+        })
+      : input.paceMode;
+
   return {
     milestones: buildMilestones(),
     firstLesson: generateFirstLessonPayload({
       currentLevel: input.currentLevel,
-      goalText: input.goalText
+      goalText: input.goalText,
+      paceMode: effectivePaceMode
     })
   };
 }

@@ -40,6 +40,14 @@
 - Task 8 is complete: `src/lib/ai/lesson-regenerator.ts` now simplifies the current lesson in place, persists a `LessonFeedbackEvent`, increments `regenerationCount`, and preserves the original `milestoneId`.
 - `/api/lesson/regenerate` now accepts `lessonId`, `reason`, and `regenerationCount`, returning the simplification summary for the caller.
 - `RegenerationBanner` now exists as a dedicated lesson UI primitive, and `LessonShell` can render it when a regeneration message is present.
+- `main` is now two commits ahead of `origin/main` after Task 7 and Task 8 commits, so Task 9 starts from a clean committed base as well.
+- Task 9 can reuse the existing `LearningProfile.paceMode`, `Plan.daysInactiveCount`, and `Plan.targetEndDate` fields without any Prisma schema changes.
+- The current code stores `mbti` and weekly time budget on the learning profile, but pace is still hard-coded to `default`; Task 9 needs to derive and use that field instead of treating it as inert metadata.
+- The smallest Task 9-complete shape is: a deterministic `replan` domain helper, a `/replan` page that surfaces the options, a `/api/plan/replan` route that applies the chosen mode, and lesson generation that adapts task granularity by `paceMode`.
+- Task 9 is complete: `src/lib/domain/replan.ts` now derives `paceMode` from MBTI and weekly time, and computes deterministic continue/light/rearrange outcomes.
+- `src/lib/ai/plan-generator.ts` now resolves an effective pace mode before generating the first lesson, but still keeps the roadmap fixed at 3 milestones.
+- `src/lib/ai/lesson-generator.ts` now changes only task granularity and load by pace mode: `lighter` compresses the work, `slower` breaks it into more smaller tasks, and `default` keeps the original shape.
+- `/api/plan/replan` now applies the chosen replan result to the active plan and learning profile, and `/replan` exposes the option set in the UI.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -59,6 +67,9 @@
 | Regenerate the current lesson in place for Task 8 | The schema already has regeneration metadata, and in-place mutation is the smallest way to simplify content while preserving milestone continuity |
 | Preserve the quiz and milestone framing while reducing task scope | The plan says the regenerated lesson must stay on the same milestone and become easier to execute |
 | Keep Task 8 stateless at the page layer for now | The implementation plan requires regeneration logic and messaging, not a fully wired client workflow in this batch |
+| Keep Task 9 focused on deterministic replan math and pacing rules | The implementation plan only asks for continue/light/rearrange options and light MBTI effects |
+| Reuse `paceMode` as the single pacing switch across onboarding, plan generation, and lessons | This avoids introducing a second parallel pacing concept |
+| Keep `replan` persistence lightweight in Task 9 | Updating the active plan deadline and profile pace mode is enough to satisfy the current batch without inventing a full review-lesson scheduler |
 
 ## Issues Encountered
 | Issue | Resolution |

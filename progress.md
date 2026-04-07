@@ -196,6 +196,50 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 10: Task 8 Commit and Task 9 Setup
+- **Status:** in_progress
+- Actions taken:
+  - Re-ran full verification before committing the Task 8 change set.
+  - Committed Task 8 as `1cdbcf0 feat: add lesson regeneration flow`.
+  - Re-read the Task 9 implementation plan and the current plan/lesson generation flow.
+  - Confirmed Task 9 can build on the existing `paceMode`, `daysInactiveCount`, and target-date fields without schema changes.
+  - Updated planning files to move the active work item from Task 8 to Task 9.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 10A: Task 9
+- **Status:** complete
+- Actions taken:
+  - Added a failing replan-domain test for the default inactive recommendation.
+  - Added a failing pace-mode test for MBTI/time-budget mapping and a plan-generation assertion that pace affects only the lesson shape.
+  - Verified the red state from the missing `src/lib/domain/replan.ts` module.
+  - Implemented `src/lib/domain/replan.ts`, `/api/plan/replan`, and the `/replan` page.
+  - Updated `src/lib/ai/plan-generator.ts` to resolve effective pace mode before generating the first lesson.
+  - Updated `src/lib/ai/lesson-generator.ts` so `paceMode` changes task granularity and load without changing milestone structure.
+  - Re-ran the focused Task 9 tests and confirmed they pass.
+- Files created/modified:
+  - `tests/unit/replan.test.ts` (created)
+  - `tests/unit/pace-mode.test.ts` (created)
+  - `src/lib/domain/replan.ts` (created)
+  - `src/app/api/plan/replan/route.ts` (created)
+  - `src/app/replan/page.tsx` (created)
+  - `src/lib/ai/lesson-generator.ts` (updated)
+  - `src/lib/ai/plan-generator.ts` (updated)
+  - `src/lib/routes.ts` (updated)
+
+### Phase 11: Task 9 Verification
+- **Status:** complete
+- Actions taken:
+  - Ran focused Task 9 tests.
+  - Ran the full unit suite as a regression pass.
+  - Ran lint and production build to confirm the new route and page compile cleanly.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Final Verification Results
 | Check | Command | Actual | Status |
 |------|---------|--------|--------|
@@ -213,6 +257,13 @@
 | Full unit suite after Task 8 | `npm test` | 13 files passed, 15 tests passed | ✓ |
 | Lint after Task 8 | `npm run lint` | Exit code 0 | ✓ |
 | Production build after Task 8 | `npm run build` | Exit code 0, 14 routes built | ✓ |
+| Fresh full unit suite before Task 8 commit | `npm test` | 13 files passed, 15 tests passed | ✓ |
+| Fresh lint before Task 8 commit | `npm run lint` | Exit code 0 | ✓ |
+| Fresh production build before Task 8 commit | `npm run build` | Exit code 0, 14 routes built | ✓ |
+| Task 9 focused tests | `npm test -- tests/unit/replan.test.ts tests/unit/pace-mode.test.ts` | 2 files passed, 3 tests passed | ✓ |
+| Full unit suite after Task 9 | `npm test` | 15 files passed, 18 tests passed | ✓ |
+| Lint after Task 9 | `npm run lint` | Exit code 0 | ✓ |
+| Production build after Task 9 | `npm run build` | Exit code 0, 16 routes built | ✓ |
 
 ### Phase 3: Implementation
 - **Status:** complete
@@ -295,11 +346,11 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Task 8 is implemented and verified locally |
-| Where am I going? | The next implementation step is Task 9 |
+| Where am I? | Task 9 is implemented and verified locally |
+| Where am I going? | The next implementation step is Task 10 |
 | What's the goal? | Keep advancing the AI Learning Assistant MVP through the written implementation plan |
-| What have I learned? | The regeneration flow can stay fully server-driven in this batch, with a tiny UI primitive for messaging and no schema changes |
-| What have I done? | Committed Task 7, completed Task 8, verified the new regeneration route and banner, and synced the planning documents again |
+| What have I learned? | The clean Task 9 boundary is: replan changes schedule and pace, while lesson generation alone absorbs the pacing effect |
+| What have I done? | Committed Task 8, completed Task 9, verified the new replan flow, and synced the planning documents again |
 
 ---
 *Update after completing each phase or encountering errors*
