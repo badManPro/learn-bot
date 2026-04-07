@@ -33,13 +33,6 @@ export async function POST(request: Request) {
 
   const nextVisibleTaskIndex = getNextVisibleTaskIndex(tasks.map((task) => task.status !== "pending"));
 
-  if (nextVisibleTaskIndex === null) {
-    await db.lesson.update({
-      where: { id: updatedTask.lessonId },
-      data: { status: "completed" }
-    });
-  }
-
   return NextResponse.json({
     status: "ok",
     nextVisibleTaskIndex

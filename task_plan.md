@@ -1,7 +1,7 @@
-# Task Plan: AI Learning Assistant MVP Batch 2
+# Task Plan: AI Learning Assistant MVP Task 7
 
 ## Goal
-Execute Task 4 to Task 6 for the AI Learning Assistant MVP by adding deterministic goal mapping, roadmap and first-lesson generation, and the Today Lesson task-progression flow.
+Sync the planning documents to the current repository state, then execute Task 7 for the AI Learning Assistant MVP by adding quiz submission and the lesson completion page.
 
 ## Current Phase
 Phase 5
@@ -21,27 +21,27 @@ Phase 5
 - **Status:** complete
 
 ### Phase 3: Implementation
-- [x] Execute Task 4 from the implementation plan
-- [x] Execute Task 5 from the implementation plan
-- [x] Execute Task 6 from the implementation plan
-- [x] Keep the red-green cycle explicit for each task
+- [x] Sync `task_plan.md`, `findings.md`, and `progress.md` to the post-Batch-2 repository state
+- [x] Add failing Task 7 tests
+- [x] Implement quiz submission and lesson completion page
+- [x] Align lesson completion semantics with Task 7
 - **Status:** complete
 
 ### Phase 4: Testing & Verification
-- [x] Run task-level verification commands
-- [x] Run cross-task verification for the second batch
+- [x] Run Task 7 verification commands
+- [x] Run relevant regression checks for existing lesson flow
 - [x] Record results in progress.md
 - **Status:** complete
 
 ### Phase 5: Delivery
 - [x] Summarize what was implemented
 - [x] Highlight blockers or follow-up work
-- [x] Hand off for user feedback before the next batch
+- [x] Hand off for user feedback before Task 8
 - **Status:** complete
 
 ## Key Questions
-1. Can Task 4 to Task 6 fit cleanly on top of the current onboarding and Prisma foundation without revising the frozen spec?
-2. Does the current local Prisma workaround remain sufficient once plan, milestone, lesson, task, and quiz persistence are exercised?
+1. How should Task 7 define the exact boundary between “all atomic tasks done” and “lesson completed”?
+2. Can Task 7 reuse the current deterministic lesson preview flow without introducing full client-side state management?
 
 ## Decisions Made
 | Decision | Rationale |
@@ -54,6 +54,8 @@ Phase 5
 | Pin the project to Node 22 | Node 23 contributed enough uncertainty during Prisma investigation that the project should advertise the supported runtime |
 | Use `prisma migrate diff` plus `prisma db execute` as the current schema bootstrap workaround | `db push` remains broken locally, but Prisma can still generate valid SQL and execute it successfully |
 | Keep Task 4 to Task 6 deterministic and schema-first | The spec explicitly allows a constrained single-path v0 and requires Zod-validated structured payloads |
+| Treat quiz correctness as the lesson completion gate in Task 7 | The implementation plan says the lesson becomes complete when the quiz answer is correct |
+| Sync planning docs before changing code again | The repo state already moved past Batch 2 and the planning files contained stale Batch 1/2 status text |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

@@ -3,5 +3,6 @@ export const ROUTES = {
   onboarding: "/onboarding",
   roadmap: "/roadmap",
   unsupported: "/unsupported",
-  lesson: (lessonId: string) => `/lesson/${lessonId}`
+  lesson: (lessonId: string) => `/lesson/${lessonId}`,
+  lessonComplete: (lessonId: string) => `/lesson/${lessonId}/complete`
 } as const;

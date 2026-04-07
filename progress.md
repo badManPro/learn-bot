@@ -100,12 +100,70 @@
   - `tests/unit/lesson-page.test.tsx` (updated)
   - `src/lib/ai/plan-generator.ts` (updated)
 
+### Phase 5: Delivery of Batch 2
+- **Status:** complete
+- Actions taken:
+  - Summarized the Task 4 to Task 6 batch state.
+  - Committed the batch as `950737e add learning roadmap and lesson flow`.
+  - Pushed `main` to `origin/main`.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 6: Task 7 Setup and Document Sync
+- **Status:** in_progress
+- Actions taken:
+  - Re-read the implementation plan for Task 7 and compared it against the current repo state.
+  - Confirmed the current lesson flow already has `Lesson`, `AtomicTask`, and `Quiz` scaffolding.
+  - Identified a semantic mismatch: task completion routes currently mark the lesson complete before quiz submission.
+  - Updated the planning files so they reflect the post-Batch-2 state and Task 7 start.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 6A: Task 7
+- **Status:** complete
+- Actions taken:
+  - Added a failing quiz submission test for correct and incorrect answers.
+  - Added a failing completion page render test for completed work and milestone progress.
+  - Verified the red state from the missing `submitQuizAnswer` export and the missing completion page file.
+  - Extended `src/lib/domain/progress.ts` with quiz submission and lesson completion summary helpers.
+  - Added `/api/lesson/quiz-submit` and the `/lesson/[lessonId]/complete` page.
+  - Moved lesson completion responsibility out of task complete/skip routes and into quiz submission.
+  - Re-ran the focused Task 7 tests and confirmed they pass.
+- Files created/modified:
+  - `tests/unit/quiz-submit.test.ts` (created)
+  - `tests/unit/completion-page.test.tsx` (created)
+  - `src/app/api/lesson/quiz-submit/route.ts` (created)
+  - `src/app/lesson/[lessonId]/complete/page.tsx` (created)
+  - `src/lib/domain/progress.ts` (updated)
+  - `src/lib/routes.ts` (updated)
+  - `src/app/api/task/complete/route.ts` (updated)
+  - `src/app/api/task/skip/route.ts` (updated)
+
+### Phase 7: Task 7 Verification
+- **Status:** complete
+- Actions taken:
+  - Ran focused Task 7 tests for the new helper and completion page.
+  - Ran the full unit suite as a regression pass.
+  - Ran lint and production build to confirm route and type safety.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Final Verification Results
 | Check | Command | Actual | Status |
 |------|---------|--------|--------|
 | Full unit suite | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm vitest run` | 9 files passed, 10 tests passed | ✓ |
 | Lint | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm lint` | Exit code 0 | ✓ |
 | Production build | `PATH="/opt/homebrew/opt/node@22/bin:$PATH" pnpm build` | Exit code 0, 12 routes built | ✓ |
+| Task 7 focused tests | `npm test -- tests/unit/quiz-submit.test.ts tests/unit/completion-page.test.tsx` | 2 files passed, 3 tests passed | ✓ |
+| Full unit suite after Task 7 | `npm test` | 11 files passed, 13 tests passed | ✓ |
+| Lint after Task 7 | `npm run lint` | Exit code 0 | ✓ |
+| Production build after Task 7 | `npm run build` | Exit code 0, 13 routes built | ✓ |
 
 ### Phase 3: Implementation
 - **Status:** complete
@@ -188,11 +246,11 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Batch 1 implementation and verification are complete |
-| Where am I going? | Wait for feedback before starting Task 4 to Task 6 |
-| What's the goal? | Build the first working slice of the AI Learning Assistant MVP |
-| What have I learned? | The first three planned tasks are implementable, and the only remaining infrastructure quirk is the local `prisma db push` failure |
-| What have I done? | Bootstrapped the app shell, added guest session and schema foundations, implemented onboarding, and verified the first batch |
+| Where am I? | Batch 2 is complete and Task 7 is now in progress |
+| Where am I going? | Task 7 is complete; the next implementation step is Task 8 |
+| What's the goal? | Keep advancing the AI Learning Assistant MVP through the written implementation plan |
+| What have I learned? | The lesson/task flow can stay deterministic, and the clean boundary is: tasks advance progression, quiz correctness completes the lesson |
+| What have I done? | Completed Task 1 to Task 7, verified the new completion flow, and synced the planning documents to the current repo state |
 
 ---
 *Update after completing each phase or encountering errors*

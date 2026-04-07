@@ -1,7 +1,7 @@
 # Findings & Decisions
 
 ## Requirements
-- Build the AI Learning Assistant MVP from the provided docs, starting with the first implementation batch.
+- Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.
 - Keep the v0 scope constrained to a single supported path: `python_for_ai_workflows`.
 - Use Next.js App Router, TypeScript, Tailwind CSS, Zod, Prisma, SQLite, OpenAI SDK, Vitest, React Testing Library, and Playwright.
 - Implement guest-session persistence via a `guest_user_id` cookie.
@@ -27,6 +27,12 @@
 - Task 5 is complete: deterministic roadmap and first-lesson generators now exist, `/api/plan/generate` and `/api/plan/current` can bootstrap or return the active plan, and the roadmap page renders the expected 3-milestone overview.
 - Task 6 is complete: the lesson page now renders a Today Lesson shell with completion criteria first, task progression is encoded in `getNextVisibleTaskIndex`, and task complete/skip APIs return the next visible task index while marking the lesson complete when all tasks are done.
 - The repo had a pre-existing verification blocker in `eslint.config.mjs`; it required a flat-config rewrite plus a Next 15 dynamic-route `params: Promise<...>` fix before `pnpm lint` and `pnpm build` could pass.
+- The working tree is currently clean and `main` is aligned with `origin/main`, so Task 7 can start from a stable base.
+- Task 7 can reuse the existing `Lesson`, `AtomicTask`, and `Quiz` Prisma models without schema changes.
+- There is a behavior gap between the current code and the Task 7 plan: `src/app/api/task/complete/route.ts` and `src/app/api/task/skip/route.ts` mark a lesson as `completed` when all tasks are done, but the implementation plan says lesson completion should happen only after a correct quiz answer.
+- The current lesson page already renders a quiz card, so Task 7 mainly needs submission handling, correctness evaluation, and a dedicated completion page.
+- Task 7 is complete: quiz submission now lives in `/api/lesson/quiz-submit`, correct answers transition the lesson to `completed`, and `/lesson/[lessonId]/complete` shows completed work plus milestone progress.
+- Task completion and skip routes now only advance progression; they no longer close the lesson before the quiz is answered correctly.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -40,6 +46,9 @@
 | Accept a Prisma bootstrap workaround for local development | It unblocks product work while keeping schema generation inside Prisma tooling |
 | Execute Task 4 to Task 6 as a single second batch | The implementation plan is explicitly batched in groups of three tasks |
 | Use deterministic generators instead of live model calls in this batch | The frozen spec emphasizes predictable single-path v0 behavior and accepts constrained generation |
+| Start Task 7 from the current post-Batch-2 codebase instead of rewriting the lesson flow | The existing lesson shell, quiz card, and progress helper already provide the right scaffold |
+| Move lesson completion responsibility to quiz submission while keeping task progression separate | This aligns the live code with the written Task 7 contract |
+| Keep the Task 7 completion page server-rendered from a progress-domain helper | The page only needs persisted lesson, task, and milestone summary data and does not require client state for v0 |
 
 ## Issues Encountered
 | Issue | Resolution |
