@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { mapGoal } from "@/lib/ai/goal-mapper";
 import { db } from "@/lib/db";
 import { ROUTES } from "@/lib/routes";
 import { getOrCreateGuestUserId } from "@/lib/session";
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
   }
 
   const guestUserId = await getOrCreateGuestUserId();
+  const goalMapping = await mapGoal(parsed.data.goalText);
 
   await db.user.upsert({
     where: { id: guestUserId },
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
       mbti: parsed.data.mbti ?? null,
       paceMode: "default",
       goalText: parsed.data.goalText,
-      goalPath: null
+      goalPath: goalMapping.mappedPath
     },
     update: {
       currentLevel: parsed.data.currentLevel,
@@ -63,12 +65,13 @@ export async function POST(request: Request) {
       targetDeadline: new Date(parsed.data.targetDeadline),
       mbti: parsed.data.mbti ?? null,
       paceMode: "default",
-      goalText: parsed.data.goalText
+      goalText: parsed.data.goalText,
+      goalPath: goalMapping.mappedPath
     }
   });
 
   return NextResponse.json({
     status: "ok",
-    redirectTo: ROUTES.roadmap
+    redirectTo: goalMapping.supportStatus === "supported" ? ROUTES.roadmap : ROUTES.unsupported
   });
 }
