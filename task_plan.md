@@ -1,7 +1,7 @@
-# Task Plan: AI Learning Assistant MVP Task 7
+# Task Plan: AI Learning Assistant MVP Task 8
 
 ## Goal
-Sync the planning documents to the current repository state, then execute Task 7 for the AI Learning Assistant MVP by adding quiz submission and the lesson completion page.
+Execute Task 8 for the AI Learning Assistant MVP by adding lesson regeneration and user feedback handling, while keeping planning documents aligned with the live repository state.
 
 ## Current Phase
 Phase 5
@@ -21,27 +21,27 @@ Phase 5
 - **Status:** complete
 
 ### Phase 3: Implementation
-- [x] Sync `task_plan.md`, `findings.md`, and `progress.md` to the post-Batch-2 repository state
-- [x] Add failing Task 7 tests
-- [x] Implement quiz submission and lesson completion page
-- [x] Align lesson completion semantics with Task 7
+- [x] Sync planning files to the post-Task-7 repository state
+- [x] Add failing Task 8 tests
+- [x] Implement lesson regeneration helper, API route, and banner component
+- [x] Keep regeneration within the same milestone and record feedback events
 - **Status:** complete
 
 ### Phase 4: Testing & Verification
-- [x] Run Task 7 verification commands
-- [x] Run relevant regression checks for existing lesson flow
+- [x] Run Task 8 verification commands
+- [x] Run relevant regression checks for lesson and completion flows
 - [x] Record results in progress.md
 - **Status:** complete
 
 ### Phase 5: Delivery
 - [x] Summarize what was implemented
 - [x] Highlight blockers or follow-up work
-- [x] Hand off for user feedback before Task 8
+- [x] Hand off for user feedback before Task 9
 - **Status:** complete
 
 ## Key Questions
-1. How should Task 7 define the exact boundary between “all atomic tasks done” and “lesson completed”?
-2. Can Task 7 reuse the current deterministic lesson preview flow without introducing full client-side state management?
+1. What is the smallest regeneration behavior that satisfies Task 8 without forcing a full client-state rewrite?
+2. How should the regenerated lesson simplify scope while preserving the same milestone outcome?
 
 ## Decisions Made
 | Decision | Rationale |
@@ -55,7 +55,9 @@ Phase 5
 | Use `prisma migrate diff` plus `prisma db execute` as the current schema bootstrap workaround | `db push` remains broken locally, but Prisma can still generate valid SQL and execute it successfully |
 | Keep Task 4 to Task 6 deterministic and schema-first | The spec explicitly allows a constrained single-path v0 and requires Zod-validated structured payloads |
 | Treat quiz correctness as the lesson completion gate in Task 7 | The implementation plan says the lesson becomes complete when the quiz answer is correct |
-| Sync planning docs before changing code again | The repo state already moved past Batch 2 and the planning files contained stale Batch 1/2 status text |
+| Sync planning docs before changing code again | The repo state already moved past earlier batches and the planning files had drifted before the last sync |
+| Implement Task 8 by mutating the current lesson in place rather than creating a second lesson record | The plan only requires regeneration, simplified content, and feedback persistence; it does not require version history in v0 |
+| Keep the Task 8 UI surface small | A standalone regeneration banner plus API contract is enough to satisfy the plan without adding speculative client orchestration |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

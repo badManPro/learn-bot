@@ -33,6 +33,13 @@
 - The current lesson page already renders a quiz card, so Task 7 mainly needs submission handling, correctness evaluation, and a dedicated completion page.
 - Task 7 is complete: quiz submission now lives in `/api/lesson/quiz-submit`, correct answers transition the lesson to `completed`, and `/lesson/[lessonId]/complete` shows completed work plus milestone progress.
 - Task completion and skip routes now only advance progression; they no longer close the lesson before the quiz is answered correctly.
+- `main` is now one commit ahead of `origin/main` with `feat: add lesson completion flow`, so Task 8 starts from a clean, committed base.
+- Task 8 can reuse the existing `Lesson.regenerationCount`, `Lesson.generatedFromReason`, and `LessonFeedbackEvent` schema fields without introducing any schema changes.
+- The current lesson UI has no regeneration entry point yet, but `LessonShell` has a clear insertion point above the task list for a lightweight feedback banner.
+- The smallest Task 8-complete shape is: a server helper that simplifies the current lesson, an API route that triggers it, and a banner component that can display the simplification message.
+- Task 8 is complete: `src/lib/ai/lesson-regenerator.ts` now simplifies the current lesson in place, persists a `LessonFeedbackEvent`, increments `regenerationCount`, and preserves the original `milestoneId`.
+- `/api/lesson/regenerate` now accepts `lessonId`, `reason`, and `regenerationCount`, returning the simplification summary for the caller.
+- `RegenerationBanner` now exists as a dedicated lesson UI primitive, and `LessonShell` can render it when a regeneration message is present.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -49,6 +56,9 @@
 | Start Task 7 from the current post-Batch-2 codebase instead of rewriting the lesson flow | The existing lesson shell, quiz card, and progress helper already provide the right scaffold |
 | Move lesson completion responsibility to quiz submission while keeping task progression separate | This aligns the live code with the written Task 7 contract |
 | Keep the Task 7 completion page server-rendered from a progress-domain helper | The page only needs persisted lesson, task, and milestone summary data and does not require client state for v0 |
+| Regenerate the current lesson in place for Task 8 | The schema already has regeneration metadata, and in-place mutation is the smallest way to simplify content while preserving milestone continuity |
+| Preserve the quiz and milestone framing while reducing task scope | The plan says the regenerated lesson must stay on the same milestone and become easier to execute |
+| Keep Task 8 stateless at the page layer for now | The implementation plan requires regeneration logic and messaging, not a fully wired client workflow in this batch |
 
 ## Issues Encountered
 | Issue | Resolution |

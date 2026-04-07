@@ -1,13 +1,15 @@
 import type { LessonPayload } from "@/lib/ai/lesson-generator";
 
 import { QuizCard } from "@/components/lesson/quiz-card";
+import { RegenerationBanner } from "@/components/lesson/regeneration-banner";
 import { TaskCard } from "@/components/lesson/task-card";
 
 type LessonShellProps = {
   lesson: LessonPayload;
+  regenerationMessage?: string | null;
 };
 
-export function LessonShell({ lesson }: LessonShellProps) {
+export function LessonShell({ lesson, regenerationMessage }: LessonShellProps) {
   const [firstTask, ...remainingTasks] = lesson.tasks;
 
   return (
@@ -17,6 +19,12 @@ export function LessonShell({ lesson }: LessonShellProps) {
         <h1 className="text-4xl font-semibold text-stone-900">{lesson.title}</h1>
         <p className="text-base text-stone-600">{lesson.whyItMatters}</p>
       </div>
+
+      {regenerationMessage ? (
+        <div className="mt-8">
+          <RegenerationBanner message={regenerationMessage} />
+        </div>
+      ) : null}
 
       <section className="mt-10 rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-stone-900">完成标准</h2>

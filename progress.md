@@ -154,6 +154,48 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 8: Task 7 Commit and Task 8 Setup
+- **Status:** in_progress
+- Actions taken:
+  - Re-ran full verification before committing the Task 7 change set.
+  - Committed Task 7 as `abd5448 feat: add lesson completion flow`.
+  - Re-read the Task 8 implementation plan and the current lesson flow.
+  - Confirmed Task 8 can build on the existing lesson schema and UI without schema changes.
+  - Updated planning files to move the active work item from Task 7 to Task 8.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 8A: Task 8
+- **Status:** complete
+- Actions taken:
+  - Added a failing regeneration helper test that checks simplification messaging, milestone continuity, and feedback-event persistence.
+  - Added a failing banner render test.
+  - Verified the red state from missing `lesson-regenerator` and `regeneration-banner` modules.
+  - Implemented `src/lib/ai/lesson-regenerator.ts` to simplify the current lesson in place, update tasks and quiz content, increment regeneration count, and persist `LessonFeedbackEvent`.
+  - Added `/api/lesson/regenerate` and the `RegenerationBanner` component.
+  - Updated `LessonShell` to optionally render the banner without forcing a client-state rewrite.
+  - Re-ran the focused Task 8 tests and confirmed they pass.
+- Files created/modified:
+  - `tests/unit/lesson-regenerator.test.ts` (created)
+  - `tests/unit/regeneration-banner.test.tsx` (created)
+  - `src/lib/ai/lesson-regenerator.ts` (created)
+  - `src/app/api/lesson/regenerate/route.ts` (created)
+  - `src/components/lesson/regeneration-banner.tsx` (created)
+  - `src/components/lesson/lesson-shell.tsx` (updated)
+
+### Phase 9: Task 8 Verification
+- **Status:** complete
+- Actions taken:
+  - Ran focused Task 8 tests.
+  - Ran the full unit suite as a regression pass.
+  - Ran lint and production build to confirm the new route and helper compile cleanly.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Final Verification Results
 | Check | Command | Actual | Status |
 |------|---------|--------|--------|
@@ -164,6 +206,13 @@
 | Full unit suite after Task 7 | `npm test` | 11 files passed, 13 tests passed | ✓ |
 | Lint after Task 7 | `npm run lint` | Exit code 0 | ✓ |
 | Production build after Task 7 | `npm run build` | Exit code 0, 13 routes built | ✓ |
+| Fresh full unit suite before Task 7 commit | `npm test` | 11 files passed, 13 tests passed | ✓ |
+| Fresh lint before Task 7 commit | `npm run lint` | Exit code 0 | ✓ |
+| Fresh production build before Task 7 commit | `npm run build` | Exit code 0, 13 routes built | ✓ |
+| Task 8 focused tests | `npm test -- tests/unit/lesson-regenerator.test.ts tests/unit/regeneration-banner.test.tsx` | 2 files passed, 2 tests passed | ✓ |
+| Full unit suite after Task 8 | `npm test` | 13 files passed, 15 tests passed | ✓ |
+| Lint after Task 8 | `npm run lint` | Exit code 0 | ✓ |
+| Production build after Task 8 | `npm run build` | Exit code 0, 14 routes built | ✓ |
 
 ### Phase 3: Implementation
 - **Status:** complete
@@ -246,11 +295,11 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Batch 2 is complete and Task 7 is now in progress |
-| Where am I going? | Task 7 is complete; the next implementation step is Task 8 |
+| Where am I? | Task 8 is implemented and verified locally |
+| Where am I going? | The next implementation step is Task 9 |
 | What's the goal? | Keep advancing the AI Learning Assistant MVP through the written implementation plan |
-| What have I learned? | The lesson/task flow can stay deterministic, and the clean boundary is: tasks advance progression, quiz correctness completes the lesson |
-| What have I done? | Completed Task 1 to Task 7, verified the new completion flow, and synced the planning documents to the current repo state |
+| What have I learned? | The regeneration flow can stay fully server-driven in this batch, with a tiny UI primitive for messaging and no schema changes |
+| What have I done? | Committed Task 7, completed Task 8, verified the new regeneration route and banner, and synced the planning documents again |
 
 ---
 *Update after completing each phase or encountering errors*
