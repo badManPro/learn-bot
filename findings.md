@@ -1,5 +1,29 @@
 # Findings & Decisions
 
+## 2026-04-08 Product Direction Findings
+- The current product is still architected around a frozen MVP spec that supports exactly one path, `python_for_ai_workflows`, and explicitly excludes desktop app support and real API-key integration.
+- The current goal mapping path is deterministic keyword matching in [src/lib/ai/goal-mapper.ts](/Users/casper/Documents/try/learn-bot/src/lib/ai/goal-mapper.ts), not model-based intent understanding.
+- The current roadmap and first-lesson generation path is deterministic and hardcoded in [src/lib/ai/plan-generator.ts](/Users/casper/Documents/try/learn-bot/src/lib/ai/plan-generator.ts) and [src/lib/ai/lesson-generator.ts](/Users/casper/Documents/try/learn-bot/src/lib/ai/lesson-generator.ts).
+- The current lesson regeneration flow is also deterministic simplification, not model-driven regeneration, in [src/lib/ai/lesson-regenerator.ts](/Users/casper/Documents/try/learn-bot/src/lib/ai/lesson-regenerator.ts).
+- The project already includes the `openai` SDK dependency and an optional `OPENAI_API_KEY`, but there is no live model call wired anywhere in `src/`.
+- OpenAI's current API authentication docs state that the OpenAI API uses API keys and that keys must not be exposed in client-side code or apps. Source: [API Overview - Authentication](https://developers.openai.com/api/reference/overview#authentication).
+- OpenAI's current Apps SDK authentication docs describe OAuth 2.1 for ChatGPT acting as the client against your MCP server, which is not the same thing as using ChatGPT/OpenAI account login as the identity system for your own Electron app. Source: [Apps SDK - Authentication](https://developers.openai.com/apps-sdk/build/auth).
+- Updated product assumption after user clarification: the target auth UX should mirror Codex CLI, using a browser-based ChatGPT / OpenAI login with workspace selection and local credential restoration in the desktop app.
+- Inference from the official sources reviewed: OpenAI officially documents this experience for Codex CLI, which validates the UX pattern; the exact third-party integration surface still needs implementation-time validation, so the plan treats it as a required external capability rather than replacing it with product-owned auth.
+- For an AI-native learning product, prompt engineering alone is insufficient. The product needs structured outputs, domain-specific constraints, evals, and application-side validation before content reaches the UI.
+
+## Recommended Direction
+- Replace the current single-shot deterministic generator with a staged generation pipeline: domain classification -> learner model -> roadmap generation -> lesson generation -> critique/eval -> persistence.
+- Use structured JSON outputs as the contract between the model and UI. The model should generate content into typed schemas, and the renderer should never parse free-form prose heuristically.
+- Introduce domain packs instead of templates: each pack defines ontology, difficulty ladders, milestone patterns, skill prerequisites, safety rules, and acceptable task types for one field such as Python, piano, or drawing.
+- Keep model calls on a backend you control, even after moving the shell to Electron. The desktop app should authenticate to your backend; your backend should call OpenAI.
+- Treat auth and billing/entitlement as product-owned concerns. Do not block architecture on an assumed ChatGPT-login identity flow that is not documented for this use case.
+- A concrete rebuild plan has been added at `docs/plans/2026-04-08-ai-native-multi-domain-rebuild-plan.md`, covering architecture, domain packs, auth, Electron migration, removals, DB evolution, and rollout phases.
+- The auth direction has been updated to reflect the user's requirement for a Codex-style browser login with ChatGPT / OpenAI plus workspace selection, based on OpenAI's help-center documentation for Codex CLI sign-in.
+- The domain model direction has been refined so one domain pack can serve a whole domain family through tags and overlays, instead of forcing a separate pack per narrow subtopic.
+- A dedicated Electron migration plan has been added at `docs/plans/2026-04-08-electron-migration-plan.md`.
+- A concrete Phase 1 execution plan has been added at `docs/plans/2026-04-08-phase-1-execution-plan.md`, covering workspace restructuring, shared package extraction, Electron scaffolding, domain-pack shape, and boundary enforcement.
+
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.
 - Keep the v0 scope constrained to a single supported path: `python_for_ai_workflows`.

@@ -1,5 +1,67 @@
 # Progress Log
 
+## Session: 2026-04-08
+
+### Phase 1: Product and Architecture Audit
+- **Status:** complete
+- Actions taken:
+  - Re-read the current planning files and MVP docs to identify where the existing product direction conflicts with the newly requested AI-native direction.
+  - Audited the live code paths for onboarding, goal mapping, plan generation, lesson generation, and lesson regeneration.
+  - Verified that the app currently contains no real OpenAI model calls despite carrying the SDK dependency.
+  - Checked current official OpenAI docs to validate authentication and structured-output assumptions before proposing a new product architecture.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 2: Direction Definition
+- **Status:** in_progress
+- Actions taken:
+  - Reframed the product from a single-domain deterministic MVP into a multi-domain AI-native planner and lesson generator.
+  - Identified the main planning tracks: generation architecture, domain modeling, auth/platform constraints, and structured UI contracts.
+  - Prepared to deliver a concrete implementation sequence rather than a generic feature wishlist.
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 3: Delivery Plan
+- **Status:** complete
+- Actions taken:
+  - Wrote a concrete rebuild plan at `docs/plans/2026-04-08-ai-native-multi-domain-rebuild-plan.md`.
+  - Fixed the target architecture around a backend-owned AI orchestration layer, domain packs, structured output contracts, and an Electron desktop client.
+  - Documented the required removals from the current deterministic runtime path and defined phased delivery gates.
+- Files created/modified:
+  - `docs/plans/2026-04-08-ai-native-multi-domain-rebuild-plan.md` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 4: Plan Revisions
+- **Status:** complete
+- Actions taken:
+  - Revised the rebuild plan to align with a Codex-style browser login requirement instead of product-owned auth.
+  - Refined the domain-pack strategy to support one reusable base pack per domain with overlays and tags.
+  - Added a dedicated Electron migration plan that separates shell, preload, renderer, auth, IPC, and persistence concerns.
+- Files created/modified:
+  - `docs/plans/2026-04-08-ai-native-multi-domain-rebuild-plan.md` (updated)
+  - `docs/plans/2026-04-08-electron-migration-plan.md` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 5: Phase 1 Task Breakdown
+- **Status:** complete
+- Actions taken:
+  - Wrote a concrete Phase 1 execution plan for repo reset and extraction work.
+  - Broke Phase 1 into 10 implementation tasks with file targets, actions, and acceptance criteria.
+  - Fixed the handoff so the next implementation pass can start from a task list instead of a high-level architecture note.
+- Files created/modified:
+  - `docs/plans/2026-04-08-phase-1-execution-plan.md` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery
