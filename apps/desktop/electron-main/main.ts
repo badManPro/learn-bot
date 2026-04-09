@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { app, BrowserWindow, ipcMain } from "electron";
 
-import { generateMockLesson, generateMockPlan } from "./ai";
+import { generateDesktopPlan, generateMockLesson } from "./ai";
 import { getSessionSnapshot, loginWithChatGPT } from "./auth";
 import { ipcChannels } from "./ipc/contracts";
 
@@ -35,7 +35,7 @@ function createWindow() {
 app.whenReady().then(() => {
   ipcMain.handle(ipcChannels.authLogin, () => loginWithChatGPT());
   ipcMain.handle(ipcChannels.authSessionGet, () => getSessionSnapshot());
-  ipcMain.handle(ipcChannels.planGenerate, () => generateMockPlan());
+  ipcMain.handle(ipcChannels.planGenerate, (_event, input) => generateDesktopPlan(input));
   ipcMain.handle(ipcChannels.lessonGenerate, () => generateMockLesson());
 
   createWindow();

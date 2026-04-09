@@ -31,6 +31,11 @@
 - Phase 1 Task 9 is now complete: the desktop shell exposes typed preload APIs for `auth.login`, `auth.session.get`, `plan.generate`, and `lesson.generate`, with shared contract types under `apps/desktop/shared/contracts.ts`.
 - The first 2026-04-09 Electron dev verification exposed a real runtime issue: `electron-vite` was externalizing workspace packages, so the Electron main process handed raw TypeScript package sources to Node, which then failed on extensionless ESM re-exports in `packages/ai-contracts`.
 - Excluding the workspace packages from Electron dependency externalization fixed the dev boot path, and the desktop app now reaches `starting electron app...` without the prior module-resolution crash.
+- The local `openai` dependency resolved to version `4.104.0`, which supports `responses.parse` and Zod-backed structured parsing through `zodTextFormat`; the Phase 2 orchestration package uses that path instead of the older chat-completions parser.
+- Current official OpenAI docs recommend the Responses API for new text/structured-output projects and position `gpt-5-mini` as a good fit for well-defined, high-volume tasks. This Phase 2 slice uses `gpt-5-mini` as the default desktop plan model, overridable through `LEARN_BOT_PLAN_MODEL`. Sources: [Structured outputs guide](https://platform.openai.com/docs/guides/structured-outputs), [Model selection docs](https://platform.openai.com/docs/models).
+- `packages/ai-contracts` now include milestone prerequisites, success criteria, lesson materials, blocked-state actions, reflection prompts, and richer replan replacement payloads, which moves the shared contracts much closer to the rebuild plan's target UI contract.
+- `packages/ai-orchestrator` now exists and composes Python-domain prompts from the domain pack, learner-state summary, and exact schema requirements before handing the request to OpenAI.
+- The desktop renderer no longer auto-loads a fake plan on startup. It now exposes a manual `Generate Python roadmap` action that exercises the real main-process orchestration path and surfaces a clear missing-key error when `OPENAI_API_KEY` is absent.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.
@@ -130,6 +135,8 @@
 | The first lesson regeneration button path was hydration-dependent | Replaced the client fetch button with a plain form POST to the existing regeneration route |
 | Vitest started collecting E2E files and dependency test suites | Added explicit `include`/`exclude` patterns in `vitest.config.ts` |
 | Electron desktop dev crashed on workspace package ESM resolution | Stopped externalizing `@learn-bot/*` packages in `apps/desktop/electron.vite.config.ts` so Electron dev bundles those sources instead of handing raw TS modules to Node |
+| Expanding shared plan contracts broke existing persisted roadmap records | Added `enrichMilestones()` in the web plan generator so DB milestones are upgraded into the richer shared roadmap shape at read time |
+| Zod defaults widened orchestrator types during Next type-checking | Re-parsed the model output through `PlanSchema.parse()` inside `generatePythonPlan()` before normalization |
 
 ## Resources
 - `/Users/casper/Documents/project/test-skills/docs/plans/2026-04-05-ai-learning-assistant-tech-spec.md`

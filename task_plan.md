@@ -58,6 +58,8 @@ Phase 2
 |-------|---------|------------|
 | Product direction conflicted with the frozen MVP docs | 1 | Reframed the task as a post-MVP architecture change rather than an MVP extension |
 | Existing planning files were oriented around Task 10 delivery | 1 | Rebased the active task plan to the new AI-native product direction |
+| Richer AI contracts broke persisted roadmap milestone typing in the web app | 1 | Added a persisted-milestone enrichment layer so old DB records can satisfy the new shared plan schema |
+| Orchestrator contract typing widened defaulted Zod fields during Next build | 1 | Re-validated the model output through `PlanSchema.parse` before normalization and tightened the normalization step |
 
 ## Notes
 - The current app is still a web MVP with guest-cookie auth and deterministic generation paths.
@@ -68,6 +70,8 @@ Phase 2
 - The concrete Phase 1 task breakdown now lives at `docs/plans/2026-04-08-phase-1-execution-plan.md`.
 - Phase 1 workspace restructuring has now been implemented in code: the web app lives in `apps/web`, shared packages exist under `packages/*`, and the Electron shell scaffold lives in `apps/desktop`.
 - The remaining Phase 1 tasks are now complete as well: boundary lint rules are in place, the desktop preload API is typed through shared contracts, mocked `plan.generate` and `lesson.generate` both render in the shell, and Electron dev boot succeeds without the previous workspace-package resolution error.
+- The first Phase 2 slice is now in code: `packages/ai-orchestrator` exists, `packages/ai-contracts` now carry much richer plan/lesson/replan schemas, and desktop `plan.generate` calls a real OpenAI-backed Python orchestration path.
+- The desktop real-generation path currently requires `OPENAI_API_KEY`; without it, the renderer now shows an explicit configuration error instead of silently falling back to deterministic content.
 
 ---
 

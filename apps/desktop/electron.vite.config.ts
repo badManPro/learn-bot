@@ -3,7 +3,13 @@ import path from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 
-const bundledWorkspaceDeps = ["@learn-bot/ai-contracts", "@learn-bot/core", "@learn-bot/domain-packs", "@learn-bot/ui"];
+const bundledWorkspaceDeps = [
+  "@learn-bot/ai-contracts",
+  "@learn-bot/ai-orchestrator",
+  "@learn-bot/core",
+  "@learn-bot/domain-packs",
+  "@learn-bot/ui"
+];
 
 export default defineConfig({
   main: {

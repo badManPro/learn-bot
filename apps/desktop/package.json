@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@learn-bot/ai-contracts": "workspace:*",
+    "@learn-bot/ai-orchestrator": "workspace:*",
     "@learn-bot/core": "workspace:*",
     "@learn-bot/domain-packs": "workspace:*",
     "@learn-bot/ui": "workspace:*",

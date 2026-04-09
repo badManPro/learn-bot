@@ -126,6 +126,45 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 8: Phase 2 Kickoff
+- **Status:** complete
+- Actions taken:
+  - Expanded `packages/ai-contracts` so plan, lesson, and replan payloads now carry richer structured fields instead of the earlier MVP-minimal shapes.
+  - Updated the existing web deterministic lesson and roadmap generators so the current app still satisfies the richer shared contracts.
+  - Created `packages/ai-orchestrator` with a Python-domain plan request schema, prompt composition, OpenAI Responses structured-output adapter, and normalization logic.
+  - Rewired desktop `plan.generate` to call the real orchestrator path in Electron main instead of the old mock plan preview.
+  - Updated the desktop renderer to trigger plan generation explicitly and show a configuration error when `OPENAI_API_KEY` is missing.
+- Verification:
+  - `pnpm install` ✅
+  - `pnpm --filter @learn-bot/web test` ✅
+  - `pnpm --filter @learn-bot/web lint` ✅
+  - `pnpm lint:boundaries` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm --filter @learn-bot/desktop dev` ✅ reached Electron app startup with the new orchestrator wiring
+- Files created/modified:
+  - `packages/ai-contracts/src/plan.ts` (updated)
+  - `packages/ai-contracts/src/lesson.ts` (updated)
+  - `packages/ai-contracts/src/replan.ts` (updated)
+  - `packages/ai-orchestrator/**` (created)
+  - `apps/desktop/shared/contracts.ts` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `apps/desktop/electron-main/main.ts` (updated)
+  - `apps/desktop/electron-preload/api.ts` (updated)
+  - `apps/desktop/electron.vite.config.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `apps/web/src/lib/ai/plan-generator.ts` (updated)
+  - `apps/web/src/lib/ai/lesson-generator.ts` (updated)
+  - `apps/web/src/lib/ai/lesson-regenerator.ts` (updated)
+  - `apps/web/src/app/lesson/[lessonId]/page.tsx` (updated)
+  - `apps/web/tests/unit/lesson-schema.test.ts` (updated)
+  - `apps/web/tests/unit/python-plan-orchestrator.test.ts` (created)
+  - `apps/web/package.json` (updated)
+  - `apps/desktop/package.json` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery
