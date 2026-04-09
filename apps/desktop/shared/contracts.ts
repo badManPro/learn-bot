@@ -1,10 +1,11 @@
-import type { LessonContract, PlanContract } from "@learn-bot/ai-contracts";
-import type { LessonGenerationRequest, PlanGenerationRequest } from "@learn-bot/ai-orchestrator";
+import type { LessonContract, PlanContract, ReplanContract } from "@learn-bot/ai-contracts";
+import type { LessonGenerationRequest, PlanGenerationRequest, ReplanGenerationRequest } from "@learn-bot/ai-orchestrator";
 
 export const ipcChannels = {
   authLogin: "auth:login",
   authSessionGet: "auth:session:get",
   planGenerate: "plan:generate",
+  planReplan: "plan:replan",
   lessonGenerate: "lesson:generate"
 } as const;
 
@@ -26,6 +27,7 @@ export type DesktopApi = {
   };
   plan: {
     generate: (input: PlanGenerationRequest) => Promise<PlanContract>;
+    replan: (input: ReplanGenerationRequest) => Promise<ReplanContract>;
   };
   lesson: {
     generate: (input: LessonGenerationRequest) => Promise<LessonContract>;

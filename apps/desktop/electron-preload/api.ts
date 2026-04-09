@@ -11,7 +11,8 @@ export const desktopApi: DesktopApi = {
     }
   },
   plan: {
-    generate: (input) => ipcRenderer.invoke(ipcChannels.planGenerate, input)
+    generate: (input) => ipcRenderer.invoke(ipcChannels.planGenerate, input),
+    replan: (input) => ipcRenderer.invoke(ipcChannels.planReplan, input)
   },
   lesson: {
     generate: (input) => ipcRenderer.invoke(ipcChannels.lessonGenerate, input)

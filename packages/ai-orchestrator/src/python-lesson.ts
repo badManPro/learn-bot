@@ -13,12 +13,17 @@ import { z } from "zod";
 import type { StructuredTextModel } from "./openai-client";
 import { buildLearnerStateSummary, PlanGenerationRequestSchema } from "./python-plan";
 
+export const LessonGenerationModeSchema = z.enum(["initial", "follow_up", "replacement"]);
+
 export const LessonGenerationRequestSchema = PlanGenerationRequestSchema.extend({
   plan: PlanSchema,
-  lessonSeed: TodayLessonSeedSchema.optional()
+  lessonSeed: TodayLessonSeedSchema.optional(),
+  generationMode: LessonGenerationModeSchema.default("initial"),
+  lessonHistory: z.array(LessonSchema).max(5).default([])
 });
 
 export type LessonGenerationRequest = z.infer<typeof LessonGenerationRequestSchema>;
+export type LessonGenerationMode = z.infer<typeof LessonGenerationModeSchema>;
 
 const pythonPack = domainPacks.python;
 const automationOverlay = pythonPack.overlays.automation;
@@ -48,6 +53,22 @@ function buildLessonId(seed: TodayLessonSeed) {
   return `python-${seed.milestoneId}-${seed.lessonType}`;
 }
 
+function summarizeLessonHistory(history: LessonContract[]) {
+  if (history.length === 0) {
+    return "No prior lessons in this thread.";
+  }
+
+  return history
+    .slice(-3)
+    .map(
+      (lesson, index) =>
+        `${index + 1}. ${lesson.title}\nNext action: ${lesson.nextDefaultAction.label}\nTasks: ${lesson.tasks
+          .map((task) => task.title)
+          .join(", ")}`
+    )
+    .join("\n\n");
+}
+
 export function buildPythonLessonPrompts(input: LessonGenerationRequest) {
   const normalized = LessonGenerationRequestSchema.parse(input);
   const lessonRules = pythonPack.lessonRules;
@@ -65,6 +86,7 @@ export function buildPythonLessonPrompts(input: LessonGenerationRequest) {
       "The lesson must reduce decision cost: concrete atomic tasks, explicit completion criteria, and clear blocked-state recovery.",
       `Domain pack: ${pythonPack.domain.label} (${pythonPack.domain.family}).`,
       `Plan title: ${normalized.plan.planTitle}.`,
+      `Generation mode: ${normalized.generationMode}.`,
       `Lesson type: ${seed.lessonType}.`,
       `Lesson objective: ${seed.objective}.`,
       `Milestone: ${milestone.title} -> ${milestone.purpose}.`,
@@ -90,21 +112,34 @@ export function buildPythonLessonPrompts(input: LessonGenerationRequest) {
       `Plan tags: ${normalized.plan.tags.join(", ")}`,
       `Milestone lesson types: ${milestone.lessonTypes.join(", ")}`,
       `Today's lesson seed objective: ${seed.objective}`,
+      `Prior lesson history:\n${summarizeLessonHistory(normalized.lessonHistory)}`,
       "The lesson must stay inside the Python / AI / automation domain family and directly advance the active milestone.",
+      normalized.generationMode === "follow_up"
+        ? "This lesson is a follow-up. Avoid repeating the same tasks from prior lessons and move one step forward."
+        : "",
+      normalized.generationMode === "replacement"
+        ? "This lesson is a replacement after friction. Keep the scope smaller and the first step easier than the prior lesson."
+        : "",
       "Make the quiz check the key concept needed to continue the next lesson."
-    ].join("\n\n")
+    ]
+      .filter(Boolean)
+      .join("\n\n")
   };
 }
 
 function normalizePythonLesson(args: {
   lesson: LessonContract;
   seed: TodayLessonSeed;
+  generationMode: LessonGenerationMode;
+  historyLength: number;
 }): LessonContract {
   const estimatedTotalMinutes = args.lesson.tasks.reduce((sum, task) => sum + task.estimatedMinutes, 0);
+  const idSuffix =
+    args.generationMode === "initial" ? "" : `-${args.generationMode}-${Math.max(1, args.historyLength + 1)}`;
 
   return LessonSchema.parse({
     ...args.lesson,
-    lessonId: buildLessonId(args.seed),
+    lessonId: `${buildLessonId(args.seed)}${idSuffix}`,
     estimatedTotalMinutes: Math.max(args.lesson.estimatedTotalMinutes, estimatedTotalMinutes),
     materialsNeeded: unique(["Python 3", "Terminal", ...args.lesson.materialsNeeded])
   });
@@ -129,6 +164,8 @@ export async function generatePythonLesson(args: {
 
   return normalizePythonLesson({
     lesson: parsed,
-    seed
+    seed,
+    generationMode: input.generationMode,
+    historyLength: input.lessonHistory.length
   });
 }

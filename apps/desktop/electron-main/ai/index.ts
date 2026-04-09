@@ -1,10 +1,12 @@
-import type { LessonContract, PlanContract } from "@learn-bot/ai-contracts";
+import type { LessonContract, PlanContract, ReplanContract } from "@learn-bot/ai-contracts";
 import {
   createOpenAIStructuredModel,
   generatePythonLesson,
   generatePythonPlan,
+  generatePythonReplan,
   type LessonGenerationRequest,
-  type PlanGenerationRequest
+  type PlanGenerationRequest,
+  type ReplanGenerationRequest
 } from "@learn-bot/ai-orchestrator";
 
 function resolvePlanModel() {
@@ -13,6 +15,10 @@ function resolvePlanModel() {
 
 function resolveLessonModel() {
   return process.env.LEARN_BOT_LESSON_MODEL ?? process.env.LEARN_BOT_PLAN_MODEL ?? "gpt-5-mini";
+}
+
+function resolveReplanModel() {
+  return process.env.LEARN_BOT_REPLAN_MODEL ?? process.env.LEARN_BOT_PLAN_MODEL ?? "gpt-5-mini";
 }
 
 function requireOpenAIApiKey() {
@@ -42,5 +48,13 @@ export async function generateDesktopLesson(input: LessonGenerationRequest): Pro
     client: createStructuredClient(),
     input,
     model: resolveLessonModel()
+  });
+}
+
+export async function generateDesktopReplan(input: ReplanGenerationRequest): Promise<ReplanContract> {
+  return generatePythonReplan({
+    client: createStructuredClient(),
+    input,
+    model: resolveReplanModel()
   });
 }

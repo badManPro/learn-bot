@@ -44,6 +44,13 @@
 - The desktop bridge is now symmetric for generation: both `plan.generate` and `lesson.generate` flow through typed preload APIs into Electron main and then into the real orchestrator package.
 - The renderer now clears stale lesson state after a new plan is generated and requires an explicit `Generate Python lesson` action, which keeps the visible lesson output tied to the latest real roadmap instead of the old mock preview.
 - Focused orchestrator tests and broader app verification are green after the change: Python plan and lesson orchestrator tests pass, desktop build passes, web build passes, and boundary lint still passes.
+- The next clean slice is to make the desktop orchestration layer symmetric for replanning as well: add `plan.replan`, then let the lesson generator accept prior lesson history plus an override lesson seed so both replacement lessons and follow-up lessons can reuse the same generator path.
+- This shape avoids inventing two separate lesson-generation APIs. `replan` can emit a structured replacement lesson seed, while follow-up lesson generation can derive the next seed from the current lesson's `nextDefaultAction` and pass history to avoid repeating the same tasks.
+- `packages/ai-contracts/src/replan.ts` now exports a typed `ReplanReason` enum and a richer `ReplanSchema` that includes `replacementLessonSeed`, giving the renderer a structured handoff from replan into lesson generation.
+- `packages/ai-orchestrator/src/python-replan.ts` now composes Python-domain replan prompts from learner state, roadmap state, current lesson, and lesson history, then normalizes the result so non-`wrong_goal` replans stay on the active milestone.
+- `packages/ai-orchestrator/src/python-lesson.ts` now supports `generationMode` (`initial`, `follow_up`, `replacement`) and `lessonHistory`, so the same lesson generator can produce both follow-up lessons and replacement lessons without a second API surface.
+- The desktop renderer now exposes all three visible flows in one shell: initial lesson generation, follow-up lesson generation, and structured replanning that can immediately generate a replacement lesson from the returned seed.
+- Focused orchestrator tests and broader verification are green for this pass too: plan/lesson/replan orchestrator tests pass, desktop build passes, web build passes, and boundary lint still passes.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.

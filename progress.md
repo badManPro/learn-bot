@@ -196,6 +196,38 @@
   - `apps/desktop/renderer/src/App.tsx` (updated)
   - `apps/web/tests/unit/python-lesson-orchestrator.test.ts` (created)
 
+### Phase 10: Desktop Replan And Follow-up Lesson Slice
+- **Status:** complete
+- Actions taken:
+  - Re-read the rebuild plan's replan schema section and the current web deterministic replan/regeneration code to identify the smallest coherent desktop follow-up after real roadmap and lesson generation.
+  - Chose to implement this slice as one connected path: real `plan.replan` through the desktop orchestrator, plus a richer `lesson.generate` request that can accept lesson history and an override lesson seed for replacement or follow-up lessons.
+  - Expanded `packages/ai-contracts/src/replan.ts` so replans now carry a typed reason enum and a structured `replacementLessonSeed`.
+  - Added `packages/ai-orchestrator/src/python-replan.ts` with structured Python replan prompt composition, OpenAI structured-output parsing, and normalization that keeps replacement lessons on the active milestone unless the reason is `wrong_goal`.
+  - Expanded `packages/ai-orchestrator/src/python-lesson.ts` so lesson generation supports `generationMode` and `lessonHistory`, which enables history-aware follow-up lessons and replacement lessons through the same generator.
+  - Wired `plan.replan` through desktop shared contracts, preload, Electron main, and the renderer.
+  - Updated the desktop renderer to support follow-up lesson generation, three replan triggers, and direct replacement-lesson generation from the returned replan seed.
+  - Added focused orchestrator coverage for Python replan and history-aware lesson generation.
+- Verification:
+  - `pnpm --filter @learn-bot/web test -- --run tests/unit/python-plan-orchestrator.test.ts tests/unit/python-lesson-orchestrator.test.ts tests/unit/python-replan-orchestrator.test.ts` ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm lint:boundaries` ✅
+- Files created/modified:
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+  - `task_plan.md` (updated)
+  - `packages/ai-contracts/src/replan.ts` (updated)
+  - `packages/ai-orchestrator/src/python-lesson.ts` (updated)
+  - `packages/ai-orchestrator/src/python-replan.ts` (created)
+  - `packages/ai-orchestrator/src/index.ts` (updated)
+  - `apps/desktop/shared/contracts.ts` (updated)
+  - `apps/desktop/electron-preload/api.ts` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `apps/desktop/electron-main/main.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `apps/web/tests/unit/python-lesson-orchestrator.test.ts` (updated)
+  - `apps/web/tests/unit/python-replan-orchestrator.test.ts` (created)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

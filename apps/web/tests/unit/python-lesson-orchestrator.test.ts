@@ -144,3 +144,51 @@ test("python lesson generation normalizes lesson ids, materials, and total minut
   expect(result.estimatedTotalMinutes).toBe(35);
   expect(result.materialsNeeded).toEqual(expect.arrayContaining(["Python 3", "Terminal", "VS Code"]));
 });
+
+test("follow-up lesson prompts include prior lesson history and produce a follow-up id suffix", async () => {
+  const prompts = buildPythonLessonPrompts({
+    goalText: "I want to learn Python for automation",
+    currentLevel: "zero",
+    weeklyTimeBudgetMinutes: 180,
+    targetDeadline: "2026-06-30",
+    mbti: "INTJ",
+    plan: samplePlan,
+    generationMode: "follow_up",
+    lessonHistory: [sampleLesson],
+    lessonSeed: {
+      milestoneId: "m2",
+      lessonType: "practice",
+      objective: "Extend the first script with one more input case"
+    }
+  });
+
+  expect(prompts.userPrompt).toContain("Prior lesson history");
+  expect(prompts.userPrompt).toContain(sampleLesson.title);
+  expect(prompts.userPrompt).toContain("Avoid repeating the same tasks");
+
+  const fakeClient: StructuredTextModel = {
+    parse: async () => sampleLesson
+  };
+
+  const result = await generatePythonLesson({
+    client: fakeClient,
+    input: {
+      goalText: "I want to automate AI workflows with Python",
+      currentLevel: "zero",
+      weeklyTimeBudgetMinutes: 240,
+      targetDeadline: "2026-06-30",
+      mbti: null,
+      plan: samplePlan,
+      generationMode: "follow_up",
+      lessonHistory: [sampleLesson],
+      lessonSeed: {
+        milestoneId: "m2",
+        lessonType: "practice",
+        objective: "Extend the first script with one more input case"
+      }
+    },
+    model: "gpt-5-mini"
+  });
+
+  expect(result.lessonId).toBe("python-m2-practice-follow_up-2");
+});
