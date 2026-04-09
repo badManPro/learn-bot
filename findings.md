@@ -23,6 +23,10 @@
 - The domain model direction has been refined so one domain pack can serve a whole domain family through tags and overlays, instead of forcing a separate pack per narrow subtopic.
 - A dedicated Electron migration plan has been added at `docs/plans/2026-04-08-electron-migration-plan.md`.
 - A concrete Phase 1 execution plan has been added at `docs/plans/2026-04-08-phase-1-execution-plan.md`, covering workspace restructuring, shared package extraction, Electron scaffolding, domain-pack shape, and boundary enforcement.
+- Phase 1 implementation is now in place in the repo: the Next app has moved to `apps/web`, the repo root is a pnpm workspace, and `packages/ai-contracts`, `packages/ui`, `packages/core`, and `packages/domain-packs` now exist.
+- The web app now imports shared contracts and shared UI components, which proves the extraction path works without breaking the current product flow.
+- The Python domain pack now has a base pack plus an `automation` overlay, which matches the updated domain-family direction instead of forcing one pack per narrow subtopic.
+- The Electron scaffold now builds successfully and can start through `electron-vite dev`; the final runtime blocker encountered during bring-up was dependency installation policy for Electron, which was resolved by allowing built dependencies and reinstalling.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.

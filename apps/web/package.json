@@ -1,0 +1,34 @@
+{
+  "name": "@learn-bot/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "prisma db push --skip-generate && pnpm prisma:generate",
+    "dev": "next dev",
+    "prebuild": "prisma db push --skip-generate && pnpm prisma:generate",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --config ../../eslint.config.mjs",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:e2e": "playwright test --config playwright.config.ts",
+    "prisma:generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=1 prisma generate",
+    "prisma:push": "prisma db push --skip-generate && pnpm prisma:generate"
+  },
+  "dependencies": {
+    "@learn-bot/ai-contracts": "workspace:*",
+    "@learn-bot/core": "workspace:*",
+    "@learn-bot/domain-packs": "workspace:*",
+    "@learn-bot/ui": "workspace:*",
+    "@prisma/client": "^6.6.0",
+    "next": "^15.2.4",
+    "openai": "^4.91.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "prisma": "^6.6.0"
+  }
+}

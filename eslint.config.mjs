@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 
-const require = createRequire(new URL("./node_modules/.pnpm/node_modules/dummy.js", import.meta.url));
+const require = createRequire(import.meta.url);
 const nextPlugin = require("@next/eslint-plugin-next");
 const tsParser = require("@typescript-eslint/parser");
 

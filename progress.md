@@ -62,6 +62,36 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 6: Phase 1 Implementation
+- **Status:** complete
+- Actions taken:
+  - Converted the repo root into a pnpm workspace and moved the existing Next.js app into `apps/web`.
+  - Added `apps/web/package.json`, app-local TypeScript config, and updated the web build flow to keep Prisma generation working in a workspace layout.
+  - Scaffolded `apps/desktop` with Electron main, preload, renderer, and `electron-vite` configuration.
+  - Added `packages/ai-contracts`, `packages/ui`, `packages/core`, and `packages/domain-packs`.
+  - Extracted shared plan and lesson schemas, moved reusable roadmap and lesson presentation primitives into `packages/ui`, and moved the pure task progression helper into `packages/core`.
+  - Added a Python base domain pack plus an `automation` overlay.
+  - Verified that the web app still builds and that the Electron shell builds and starts.
+- Verification:
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm --filter @learn-bot/web test` ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm --filter @learn-bot/desktop dev` ✅ after allowing Electron built dependencies and reinstalling
+- Files created/modified:
+  - `package.json` (updated)
+  - `pnpm-workspace.yaml` (created)
+  - `tsconfig.base.json` (created)
+  - `tsconfig.json` (updated)
+  - `apps/web/**` (moved and updated)
+  - `apps/desktop/**` (created)
+  - `packages/ai-contracts/**` (created)
+  - `packages/ui/**` (created)
+  - `packages/core/**` (created)
+  - `packages/domain-packs/**` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

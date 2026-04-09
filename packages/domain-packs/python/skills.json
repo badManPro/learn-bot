@@ -1,0 +1,17 @@
+[
+  {
+    "id": "python-basics",
+    "label": "Python Basics",
+    "prerequisites": []
+  },
+  {
+    "id": "cli-workflows",
+    "label": "CLI Workflows",
+    "prerequisites": ["python-basics"]
+  },
+  {
+    "id": "automation-patterns",
+    "label": "Automation Patterns",
+    "prerequisites": ["cli-workflows"]
+  }
+]

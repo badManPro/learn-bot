@@ -1,0 +1,12 @@
+[
+  {
+    "id": "environment-bootstrap",
+    "label": "Environment Bootstrap",
+    "description": "Set up tools and establish a runnable Python loop."
+  },
+  {
+    "id": "first-working-tool",
+    "label": "First Working Tool",
+    "description": "Produce a small working command-line utility."
+  }
+]

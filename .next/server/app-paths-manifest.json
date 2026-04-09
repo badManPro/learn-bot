@@ -1,0 +1,7 @@
+{
+  "/api/onboarding/route": "app/api/onboarding/route.js",
+  "/api/lesson/regenerate/route": "app/api/lesson/regenerate/route.js",
+  "/onboarding/page": "app/onboarding/page.js",
+  "/roadmap/page": "app/roadmap/page.js",
+  "/lesson/[lessonId]/page": "app/lesson/[lessonId]/page.js"
+}

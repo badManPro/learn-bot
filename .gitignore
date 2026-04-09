@@ -1,4 +1,6 @@
-.next
+apps/web/.next
+apps/desktop/dist
+apps/desktop/out
 coverage
 dist
 node_modules

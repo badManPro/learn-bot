@@ -1,0 +1,7 @@
+{
+  "id": "python",
+  "label": "Python",
+  "family": "programming",
+  "defaultTags": ["python", "beginner", "project-based"],
+  "supportedModalities": ["reading", "coding", "debugging", "reflection"]
+}

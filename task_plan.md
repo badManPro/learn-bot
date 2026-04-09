@@ -66,6 +66,7 @@ Phase 2
 - The concrete rebuild plan now lives at `docs/plans/2026-04-08-ai-native-multi-domain-rebuild-plan.md`.
 - The auth direction has been revised to match a Codex-style browser login requirement, and the Electron migration plan now lives at `docs/plans/2026-04-08-electron-migration-plan.md`.
 - The concrete Phase 1 task breakdown now lives at `docs/plans/2026-04-08-phase-1-execution-plan.md`.
+- Phase 1 workspace restructuring has now been implemented in code: the web app lives in `apps/web`, shared packages exist under `packages/*`, and the Electron shell scaffold lives in `apps/desktop`.
 
 ---
 

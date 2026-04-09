@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["electron-main/**/*.ts", "electron-preload/**/*.ts", "renderer/**/*.ts", "renderer/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

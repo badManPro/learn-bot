@@ -1,0 +1,6 @@
+{
+  "defaultTaskCountRange": [2, 6],
+  "defaultTaskMinutesRange": [10, 20],
+  "mustInclude": ["execution-step", "verification-step"],
+  "forbiddenPatterns": ["skip validation", "multi-hour single task"]
+}

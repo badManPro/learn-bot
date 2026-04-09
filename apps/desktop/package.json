@@ -1,0 +1,20 @@
+{
+  "name": "@learn-bot/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {
+    "@learn-bot/ai-contracts": "workspace:*",
+    "@learn-bot/core": "workspace:*",
+    "@learn-bot/domain-packs": "workspace:*",
+    "@learn-bot/ui": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

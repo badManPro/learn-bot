@@ -1,0 +1,6 @@
+{
+  "id": "automation",
+  "tags": ["automation", "workflow", "agent-adjacent"],
+  "milestoneBias": ["first-working-tool"],
+  "lessonBias": ["input-output scripts", "repeatable command-line tasks"]
+}
