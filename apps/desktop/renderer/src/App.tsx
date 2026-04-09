@@ -22,11 +22,13 @@ function supportsInteractiveDomain(domainId: string) {
 }
 
 export default function App() {
+  const hasDesktopApi = typeof window !== "undefined" && typeof window.desktopApi !== "undefined";
   const [session, setSession] = useState<DesktopSession | null>(null);
   const [planPreview, setPlanPreview] = useState<PlanContract | null>(null);
   const [lessonPreview, setLessonPreview] = useState<LessonContract | null>(null);
   const [lessonHistory, setLessonHistory] = useState<LessonContract[]>([]);
   const [replanPreview, setReplanPreview] = useState<ReplanContract | null>(null);
+  const [bridgeError, setBridgeError] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
   const [lessonError, setLessonError] = useState<string | null>(null);
   const [replanError, setReplanError] = useState<string | null>(null);
@@ -35,18 +37,31 @@ export default function App() {
   const [isGeneratingReplan, setIsGeneratingReplan] = useState(false);
 
   useEffect(() => {
+    if (!hasDesktopApi) {
+      setBridgeError("desktopApi preload bridge is unavailable. Check the Electron preload path and DevTools console.");
+      return;
+    }
+
     let disposed = false;
 
-    void window.desktopApi.auth.session.get().then((nextSession) => {
-      if (!disposed) {
-        setSession(nextSession);
-      }
-    });
+    void window.desktopApi.auth.session
+      .get()
+      .then((nextSession) => {
+        if (!disposed) {
+          setSession(nextSession);
+        }
+      })
+      .catch((error) => {
+        if (!disposed) {
+          const message = error instanceof Error ? error.message : "Failed to read desktop session.";
+          setBridgeError(message);
+        }
+      });
 
     return () => {
       disposed = true;
     };
-  }, []);
+  }, [hasDesktopApi]);
 
   function buildLessonRequest(
     plan: PlanContract,
@@ -174,6 +189,13 @@ export default function App() {
             Electron main process with structured output validation.
           </p>
         </header>
+
+        {bridgeError ? (
+          <section className="rounded-[1.75rem] border border-rose-700/60 bg-rose-950/30 p-6 text-sm text-rose-100">
+            <p className="font-medium">Desktop bridge error</p>
+            <p className="mt-2 leading-6">{bridgeError}</p>
+          </section>
+        ) : null}
 
         <section className="rounded-[1.75rem] border border-stone-800 bg-stone-900/70 p-6">
           <div className="flex items-center justify-between gap-6">

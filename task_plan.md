@@ -122,6 +122,8 @@ Phase 5
 - The next concrete implementation target is Phase 5: choose the next non-Python domain to carry through lesson generation and replanning, or formalize roadmap-only gating until that path is built.
 - Phase 5 is now in progress: `piano` is the chosen second lesson domain, `drawing` remains roadmap-only for now, and the main technical blocker is that the shared lesson contract still carries a Python-biased `coding` task type.
 - Phase 5 is now implemented in code: `piano` lesson generation and replanning run through the real orchestrator in both web and desktop paths, the shared lesson contract now accepts non-coding task types, and `drawing` is explicitly surfaced as roadmap-only until a richer visual-feedback path exists.
+- The repo runtime default is now aligned with the desktop-first direction: root `pnpm dev` and `pnpm build` now target Electron, the renderer dev server binds to `127.0.0.1`, and the old Next.js surface has been demoted to explicit legacy commands instead of remaining the default launch path.
+- The desktop white-screen path has also been hardened: the preload runtime path now matches the actual `electron-vite` output, development automatically opens DevTools, and renderer/main-process diagnostics now log load failures instead of failing silently.
 
 ---
 

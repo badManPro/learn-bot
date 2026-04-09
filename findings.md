@@ -133,6 +133,10 @@
 - That blocker is now removed. The shared lesson contract accepts non-coding task categories such as `practice` and `observation`, which keeps old Python lessons valid while allowing piano lessons to stay domain-appropriate.
 - Phase 5 is now live for `piano`: the orchestrator package now contains dedicated piano lesson and replan generators, web plan bootstrap creates real piano lessons, lesson regeneration routes piano replans through the same structured path, and the desktop shell accepts piano lesson/replan actions.
 - `drawing` remains intentionally gated as roadmap-only. The roadmap page now says so explicitly instead of only showing a blank lesson state.
+- The repo default runtime had still been pointed at the transitional web surface even after the desktop shell became the intended product direction. Root `pnpm dev` used `pnpm dev:web`, which is why the default startup experience did not behave like a desktop app.
+- That default mismatch is now removed: root `pnpm dev` routes to Electron, root `pnpm build` routes to the desktop build, the old web scripts have been renamed to explicit `legacy-web` commands, and `electron-vite` now binds the renderer dev server to `127.0.0.1` instead of `::1`.
+- The desktop white-screen path had a concrete runtime bug: `BrowserWindow` pointed its preload script at `../preload/index.mjs`, but the actual Electron build output is `../preload/preload.mjs`. That mismatch made the preload bridge unavailable at runtime.
+- The desktop shell now opens DevTools automatically in development, logs renderer console messages plus failed-load events from the main process, and surfaces a visible renderer error panel if `window.desktopApi` is missing instead of silently failing into a white screen.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -160,6 +164,7 @@
 | Prefer a server form submission for lesson regeneration | It removes hydration timing from the critical path and keeps the E2E smoke test aligned with real browser behavior |
 | Restrict Vitest to unit tests only | Adding E2E coverage should not break the unit runner's test discovery |
 | Promote `piano` before `drawing` for Phase 5 full-runtime work | It proves non-Python lesson/replan generalization without pretending the current product can already critique visual drawing output well |
+| Make root workspace commands desktop-first and demote the old Next.js surface to explicit legacy commands | The user wants the product to launch as an Electron app by default, and leaving web on the default `pnpm dev` path directly conflicts with that |
 
 ## Issues Encountered
 | Issue | Resolution |

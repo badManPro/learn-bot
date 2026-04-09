@@ -404,6 +404,42 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 16: Desktop-First Root Commands
+- **Status:** complete
+- Actions taken:
+  - Re-audited the root workspace scripts after the user reported that `pnpm dev` still did not feel like launching the actual product.
+  - Confirmed the mismatch: root `pnpm dev` still pointed at the transitional Next.js web path instead of the Electron shell.
+  - Changed the root scripts so `pnpm dev` and `pnpm build` now target desktop by default, while the old web commands were pushed behind explicit `legacy-web` script names.
+  - Updated `README.md` to describe the desktop-first startup flow and reframe the web commands as legacy-only.
+  - Added a fixed renderer dev-server host (`127.0.0.1`) in `apps/desktop/electron.vite.config.ts` to avoid the prior IPv6 `::1` binding issue during Electron dev verification.
+- Verification:
+  - `pnpm build` ✅
+  - `pnpm lint` ✅
+  - `pnpm dev` ✅ reached `starting electron app...` after the root script switch and renderer host pin
+- Files created/modified:
+  - `package.json` (updated)
+  - `README.md` (updated)
+  - `apps/desktop/electron.vite.config.ts` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 17: Desktop White-Screen Diagnostics
+- **Status:** complete
+- Actions taken:
+  - Audited the Electron main-process window creation path after the user reported a white screen with no visible DevTools.
+  - Identified a concrete runtime bug: the preload path in `BrowserWindow` still targeted `../preload/index.mjs` even though the actual build output is `../preload/preload.mjs`.
+  - Fixed the preload path, added development-time `did-fail-load`, `render-process-gone`, `console-message`, and `did-finish-load` logging, and configured the shell to open DevTools automatically in development.
+  - Added a renderer-visible bridge error state so missing `window.desktopApi` no longer degrades into a silent blank screen.
+- Verification:
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm dev` ✅ reached `starting electron app...` and logged renderer connection plus `renderer loaded http://127.0.0.1:5173/`
+- Files created/modified:
+  - `apps/desktop/electron-main/main.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

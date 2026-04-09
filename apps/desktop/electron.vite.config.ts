@@ -32,6 +32,11 @@ export default defineConfig({
   },
   renderer: {
     root: path.resolve(__dirname, "./renderer"),
+    server: {
+      host: "127.0.0.1",
+      port: 5173,
+      strictPort: true
+    },
     build: {
       outDir: path.resolve(__dirname, "./dist/renderer"),
       rollupOptions: {
