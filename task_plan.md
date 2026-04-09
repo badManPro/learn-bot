@@ -72,6 +72,9 @@ Phase 2
 - The remaining Phase 1 tasks are now complete as well: boundary lint rules are in place, the desktop preload API is typed through shared contracts, mocked `plan.generate` and `lesson.generate` both render in the shell, and Electron dev boot succeeds without the previous workspace-package resolution error.
 - The first Phase 2 slice is now in code: `packages/ai-orchestrator` exists, `packages/ai-contracts` now carry much richer plan/lesson/replan schemas, and desktop `plan.generate` calls a real OpenAI-backed Python orchestration path.
 - The desktop real-generation path currently requires `OPENAI_API_KEY`; without it, the renderer now shows an explicit configuration error instead of silently falling back to deterministic content.
+- The next implementation target is now concrete: desktop `lesson.generate` is still backed by mock data, so the next code pass should add a real Python lesson orchestration path before expanding into replan or additional domains.
+- That lesson-generation pass is now implemented too: desktop `lesson.generate` accepts a structured request, calls the real Python lesson orchestrator in Electron main, and no longer depends on startup-time mock preview data in the renderer.
+- The next concrete follow-up after this pass is to add real replanning and history-aware next-lesson generation, then start removing the remaining deterministic web runtime generators from the active product path.
 
 ---
 

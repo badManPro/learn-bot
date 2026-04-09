@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import type { LessonContract, PlanContract } from "@learn-bot/ai-contracts";
-import type { PlanGenerationRequest } from "@learn-bot/ai-orchestrator";
+import type { LessonGenerationRequest, PlanGenerationRequest } from "@learn-bot/ai-orchestrator";
 
 import type { DesktopSession } from "../../shared/contracts";
 
@@ -18,24 +18,30 @@ export default function App() {
   const [planPreview, setPlanPreview] = useState<PlanContract | null>(null);
   const [lessonPreview, setLessonPreview] = useState<LessonContract | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
+  const [lessonError, setLessonError] = useState<string | null>(null);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [isGeneratingLesson, setIsGeneratingLesson] = useState(false);
 
   useEffect(() => {
     let disposed = false;
 
-    void Promise.all([window.desktopApi.auth.session.get(), window.desktopApi.lesson.generate()]).then(([nextSession, nextLesson]) => {
-      if (disposed) {
-        return;
+    void window.desktopApi.auth.session.get().then((nextSession) => {
+      if (!disposed) {
+        setSession(nextSession);
       }
-
-      setSession(nextSession);
-      setLessonPreview(nextLesson);
     });
 
     return () => {
       disposed = true;
     };
   }, []);
+
+  function buildLessonRequest(plan: PlanContract): LessonGenerationRequest {
+    return {
+      ...DEFAULT_PLAN_REQUEST,
+      plan
+    };
+  }
 
   async function handleGeneratePlan() {
     setIsGeneratingPlan(true);
@@ -44,12 +50,34 @@ export default function App() {
     try {
       const nextPlan = await window.desktopApi.plan.generate(DEFAULT_PLAN_REQUEST);
       setPlanPreview(nextPlan);
+      setLessonPreview(null);
+      setLessonError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Plan generation failed.";
       setPlanError(message);
       setPlanPreview(null);
     } finally {
       setIsGeneratingPlan(false);
+    }
+  }
+
+  async function handleGenerateLesson() {
+    if (!planPreview) {
+      return;
+    }
+
+    setIsGeneratingLesson(true);
+    setLessonError(null);
+
+    try {
+      const nextLesson = await window.desktopApi.lesson.generate(buildLessonRequest(planPreview));
+      setLessonPreview(nextLesson);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Lesson generation failed.";
+      setLessonError(message);
+      setLessonPreview(null);
+    } finally {
+      setIsGeneratingLesson(false);
     }
   }
 
@@ -60,8 +88,8 @@ export default function App() {
           <p className="text-xs uppercase tracking-[0.3em] text-stone-400">Learn Bot Desktop</p>
           <h1 className="text-4xl font-semibold">Phase 2 orchestration slice</h1>
           <p className="max-w-3xl text-sm leading-6 text-stone-300">
-            The desktop shell now keeps a typed preload bridge, a real Python plan generation path in the main process,
-            and a contract-rich lesson preview for the next migration step.
+            The desktop shell now keeps a typed preload bridge and runs both roadmap and lesson generation through the
+            Electron main process with structured output validation.
           </p>
         </header>
 
@@ -157,13 +185,51 @@ export default function App() {
         </section>
 
         <section className="rounded-[1.75rem] border border-stone-800 bg-stone-900/70 p-6">
-          <h2 className="text-lg font-medium">Lesson contract preview</h2>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-2xl space-y-2">
+              <h2 className="text-lg font-medium">Real Python lesson generation</h2>
+              <p className="text-sm text-stone-300">
+                This path now uses the latest generated roadmap, the active milestone, and the learner profile to
+                request a real structured lesson from the main-process orchestrator.
+              </p>
+              {planPreview ? (
+                <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
+                  <p>Active milestone: {planPreview.milestones.find((item) => item.status === "active")?.title ?? "unknown"}</p>
+                  <p>Lesson type: {planPreview.todayLessonSeed.lessonType}</p>
+                  <p>Objective: {planPreview.todayLessonSeed.objective}</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-400">
+                  Generate a roadmap first so the lesson request has an active milestone and lesson seed to build from.
+                </div>
+              )}
+            </div>
+            <button
+              className="rounded-full border border-sky-300 bg-sky-200 px-5 py-3 text-sm font-medium text-sky-950 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={!planPreview || isGeneratingLesson}
+              onClick={() => void handleGenerateLesson()}
+              type="button"
+            >
+              {isGeneratingLesson ? "Generating..." : "Generate Python lesson"}
+            </button>
+          </div>
+
+          {lessonError ? (
+            <div className="mt-4 rounded-2xl border border-amber-700/60 bg-amber-950/30 p-4 text-sm text-amber-100">
+              {lessonError}
+            </div>
+          ) : null}
+
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
             <article className="rounded-3xl border border-stone-800 bg-stone-950/60 p-5">
               <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Lesson.generate</p>
-              <h3 className="mt-3 text-2xl font-semibold text-white">{lessonPreview?.title ?? "Loading..."}</h3>
-              <p className="mt-3 text-sm leading-6 text-stone-300">{lessonPreview?.whyThisNow}</p>
-              <p className="mt-2 text-sm text-stone-400">Materials: {lessonPreview?.materialsNeeded.join(", ")}</p>
+              <h3 className="mt-3 text-2xl font-semibold text-white">{lessonPreview?.title ?? "No lesson generated yet"}</h3>
+              <p className="mt-3 text-sm leading-6 text-stone-300">
+                {lessonPreview?.whyThisNow ?? "The generated lesson will appear here after you run the roadmap and lesson actions."}
+              </p>
+              <p className="mt-2 text-sm text-stone-400">
+                Materials: {lessonPreview?.materialsNeeded.join(", ") ?? "Waiting for lesson output"}
+              </p>
               <ul className="mt-5 space-y-3 text-sm text-stone-200">
                 {lessonPreview?.tasks.map((task) => (
                   <li className="rounded-2xl border border-stone-800 p-4" key={task.id}>
@@ -181,7 +247,7 @@ export default function App() {
               <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Recovery and next action</p>
               <div className="mt-3 rounded-2xl border border-stone-800 p-4">
                 <p className="font-medium text-white">Completion contract</p>
-                <p className="mt-2">{lessonPreview?.completionContract.summary}</p>
+                <p className="mt-2">{lessonPreview?.completionContract.summary ?? "Waiting for generated lesson output."}</p>
               </div>
               <div className="mt-4 rounded-2xl border border-stone-800 p-4">
                 <p className="font-medium text-white">If blocked</p>
@@ -195,12 +261,12 @@ export default function App() {
               </div>
               <div className="mt-4 rounded-2xl border border-stone-800 p-4">
                 <p className="font-medium text-white">Next default action</p>
-                <p className="mt-2">{lessonPreview?.nextDefaultAction.label}</p>
+                <p className="mt-2">{lessonPreview?.nextDefaultAction.label ?? "Waiting for generated lesson output."}</p>
                 <p className="mt-2 text-stone-500">{lessonPreview?.nextDefaultAction.rationale}</p>
               </div>
               <div className="mt-4 rounded-2xl border border-stone-800 p-4">
                 <p className="font-medium text-white">Quiz checkpoint</p>
-                <p className="mt-2">{lessonPreview?.quiz.question}</p>
+                <p className="mt-2">{lessonPreview?.quiz.question ?? "Generate a lesson to inspect the checkpoint question."}</p>
               </div>
             </article>
           </div>

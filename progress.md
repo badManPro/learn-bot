@@ -165,6 +165,37 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 9: Real Desktop Lesson Generation
+- **Status:** complete
+- Actions taken:
+  - Re-read the rebuild plan, Phase 1 handoff, and current Phase 2 notes to confirm the next implementation target after real `plan.generate`.
+  - Verified in code that the desktop main process already routes `plan.generate` through `packages/ai-orchestrator`, while `lesson.generate` still returns a hardcoded `LessonSchema` preview.
+  - Chose the lesson request boundary for this pass: `PlanContract` plus the same learner-profile fields already used for roadmap generation, so lesson prompts can reuse the active milestone, `todayLessonSeed`, and pacing context.
+  - Decided to remove the renderer's startup-time lesson preview fetch and replace it with an explicit real lesson generation action triggered after a roadmap exists.
+  - Set the execution target for this pass to: add a real Python lesson generation path through the desktop orchestration layer, then verify desktop build and focused orchestrator coverage.
+  - Added `packages/ai-orchestrator/src/python-lesson.ts` with a structured Python lesson request schema, prompt builder, OpenAI structured-output call, and normalization logic.
+  - Updated the desktop main process, preload API, and shared contracts so `lesson.generate` now accepts a typed request and calls the real orchestrator instead of returning a hardcoded preview lesson.
+  - Updated the desktop renderer so the lesson panel is fed by an explicit `Generate Python lesson` action based on the latest generated roadmap, and clears stale lesson output when a new roadmap is generated.
+  - Added focused orchestrator coverage for the new lesson path.
+- Verification:
+  - `pnpm --filter @learn-bot/web test -- --run tests/unit/python-plan-orchestrator.test.ts tests/unit/python-lesson-orchestrator.test.ts` ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm lint:boundaries` ✅
+- Files created/modified:
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+  - `packages/ai-orchestrator/src/python-plan.ts` (updated)
+  - `packages/ai-orchestrator/src/python-lesson.ts` (created)
+  - `packages/ai-orchestrator/src/index.ts` (updated)
+  - `apps/desktop/shared/contracts.ts` (updated)
+  - `apps/desktop/electron-preload/api.ts` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `apps/desktop/electron-main/main.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `apps/web/tests/unit/python-lesson-orchestrator.test.ts` (created)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

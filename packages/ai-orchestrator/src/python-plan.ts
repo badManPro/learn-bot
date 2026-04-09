@@ -16,7 +16,7 @@ export type PlanGenerationRequest = z.infer<typeof PlanGenerationRequestSchema>;
 
 const pythonPack = domainPacks.python;
 
-function derivePaceSignal(input: PlanGenerationRequest) {
+export function derivePaceSignal(input: PlanGenerationRequest) {
   if (input.weeklyTimeBudgetMinutes <= 120) {
     return "slower";
   }
@@ -32,7 +32,7 @@ function derivePaceSignal(input: PlanGenerationRequest) {
   return "default";
 }
 
-function buildLearnerStateSummary(input: PlanGenerationRequest) {
+export function buildLearnerStateSummary(input: PlanGenerationRequest) {
   return [
     `Goal: ${input.goalText}`,
     `Current level: ${input.currentLevel}`,

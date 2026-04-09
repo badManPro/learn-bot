@@ -36,6 +36,14 @@
 - `packages/ai-contracts` now include milestone prerequisites, success criteria, lesson materials, blocked-state actions, reflection prompts, and richer replan replacement payloads, which moves the shared contracts much closer to the rebuild plan's target UI contract.
 - `packages/ai-orchestrator` now exists and composes Python-domain prompts from the domain pack, learner-state summary, and exact schema requirements before handing the request to OpenAI.
 - The desktop renderer no longer auto-loads a fake plan on startup. It now exposes a manual `Generate Python roadmap` action that exercises the real main-process orchestration path and surfaces a clear missing-key error when `OPENAI_API_KEY` is absent.
+- The current desktop AI boundary is asymmetric: `plan.generate` already calls the real Python orchestrator, but `lesson.generate` still returns `LessonSchema.parse(...)` from a hardcoded preview in `apps/desktop/electron-main/ai/index.ts`.
+- The most direct next implementation step is therefore to add a structured Python lesson request and generator to `packages/ai-orchestrator`, wire it through the desktop main/preload bridge, and replace the renderer's startup-time lesson preview mock with a real request path.
+- The cleanest request boundary for real lesson generation is `plan + learner profile`, not a no-arg IPC call. `PlanContract` already carries the active milestone and `todayLessonSeed`, while the learner profile still provides pacing and experience signals the lesson prompt needs.
+- The renderer should stop auto-loading a lesson on startup; instead it should generate a lesson explicitly from the latest real plan so the desktop shell exercises one coherent Python end-to-end path.
+- `packages/ai-orchestrator/src/python-lesson.ts` now implements that real lesson path: it validates a `LessonGenerationRequest`, composes Python-domain lesson prompts from the roadmap, active milestone, lesson seed, domain pack, and learner state, then parses the result through `LessonSchema`.
+- The desktop bridge is now symmetric for generation: both `plan.generate` and `lesson.generate` flow through typed preload APIs into Electron main and then into the real orchestrator package.
+- The renderer now clears stale lesson state after a new plan is generated and requires an explicit `Generate Python lesson` action, which keeps the visible lesson output tied to the latest real roadmap instead of the old mock preview.
+- Focused orchestrator tests and broader app verification are green after the change: Python plan and lesson orchestrator tests pass, desktop build passes, web build passes, and boundary lint still passes.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.
