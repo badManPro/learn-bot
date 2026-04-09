@@ -362,6 +362,48 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 15: Phase 5 Domain Choice And Runtime Boundary
+- **Status:** complete
+- Actions taken:
+  - Re-read the rebuild plan, current planning files, desktop shell, and active web runtime to identify the next concrete step after multi-domain roadmap generation.
+  - Confirmed that non-Python runtime support is still only partial: web persists `piano` and `drawing` roadmaps without lessons, and desktop lesson/replan actions still hard-reject non-Python plans.
+  - Chose `piano` as the second full lesson/replan domain for Phase 5, while keeping `drawing` explicitly roadmap-only until the product has a stronger visual-feedback path.
+  - Identified the main implementation blocker for that step: the shared lesson contract still encodes a Python-biased `coding` task type even though the domain packs already carry non-coding lesson rules.
+  - Expanded `packages/ai-contracts/src/lesson.ts` with non-coding task types, added shared lesson/replan request helpers plus domain dispatchers in `packages/ai-orchestrator`, and implemented dedicated `piano` lesson and replan generators.
+  - Rewired web plan bootstrap, lesson regeneration, and replan preview/apply flows onto the domain-aware lesson/replan dispatchers so `python` and `piano` now share the same real runtime path.
+  - Updated the desktop shell so lesson/replan actions now support both `python` and `piano`, while unsupported domains like `drawing` show an explicit roadmap-only message instead of a silent missing-lesson state.
+- Verification:
+  - `pnpm --filter @learn-bot/web test -- --run tests/unit/piano-lesson-orchestrator.test.ts tests/unit/piano-replan-orchestrator.test.ts tests/unit/lesson-regenerator.test.ts tests/unit/roadmap-page.test.tsx tests/unit/lesson-schema.test.ts` ✅
+  - `pnpm lint:boundaries` ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm --filter @learn-bot/web lint` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+- Files created/modified:
+  - `README.md` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `apps/web/src/app/roadmap/page.tsx` (updated)
+  - `apps/web/src/lib/ai/lesson-regenerator.ts` (updated)
+  - `apps/web/src/lib/ai/plan-generator.ts` (updated)
+  - `apps/web/src/lib/ai/replan-runtime.ts` (updated)
+  - `apps/web/tests/unit/lesson-regenerator.test.ts` (updated)
+  - `apps/web/tests/unit/lesson-schema.test.ts` (updated)
+  - `apps/web/tests/unit/piano-lesson-orchestrator.test.ts` (created)
+  - `apps/web/tests/unit/piano-replan-orchestrator.test.ts` (created)
+  - `apps/web/tests/unit/roadmap-page.test.tsx` (updated)
+  - `packages/ai-contracts/src/lesson.ts` (updated)
+  - `packages/ai-orchestrator/src/domain-runtime.ts` (created)
+  - `packages/ai-orchestrator/src/index.ts` (updated)
+  - `packages/ai-orchestrator/src/lesson.ts` (created)
+  - `packages/ai-orchestrator/src/piano-lesson.ts` (created)
+  - `packages/ai-orchestrator/src/piano-replan.ts` (created)
+  - `packages/ai-orchestrator/src/python-lesson.ts` (updated)
+  - `packages/ai-orchestrator/src/python-replan.ts` (updated)
+  - `packages/ai-orchestrator/src/replan.ts` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

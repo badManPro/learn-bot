@@ -1,6 +1,6 @@
 # AI Learning Assistant MVP
 
-一个基于 Next.js App Router 和 Electron workspace 的 AI 学习助手实验项目。当前只支持单一路径 `python_for_ai_workflows`，并且 roadmap、lesson、replan 已经优先走真实 structured-output AI runtime。
+一个基于 Next.js App Router 和 Electron workspace 的 AI 学习助手实验项目。当前 `python_for_ai_workflows` 与 `piano_foundations` 已支持 roadmap、lesson、replan 的真实 structured-output AI runtime；`drawing_foundations` 仍保持 roadmap-only。
 
 ## Stack
 

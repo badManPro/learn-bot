@@ -1,9 +1,9 @@
 import type { LessonContract, PlanContract, ReplanContract } from "@learn-bot/ai-contracts";
 import {
   createOpenAIStructuredModel,
+  generateLessonForDomain,
   generatePlan,
-  generatePythonLesson,
-  generatePythonReplan,
+  generateReplanForDomain,
   type LessonGenerationRequest,
   type PlanGenerationRequest,
   type ReplanGenerationRequest
@@ -25,7 +25,7 @@ function requireOpenAIApiKey() {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not set. The desktop plan generation path is wired, but it cannot run without an API key.");
+    throw new Error("OPENAI_API_KEY is not set. The desktop AI generation path is wired, but it cannot run without an API key.");
   }
 
   return apiKey;
@@ -44,11 +44,7 @@ export async function generateDesktopPlan(input: PlanGenerationRequest): Promise
 }
 
 export async function generateDesktopLesson(input: LessonGenerationRequest): Promise<LessonContract> {
-  if (input.plan.domainId !== "python") {
-    throw new Error(`Lesson generation is currently implemented only for Python plans. Received domain: ${input.plan.domainId}.`);
-  }
-
-  return generatePythonLesson({
+  return generateLessonForDomain({
     client: createStructuredClient(),
     input,
     model: resolveLessonModel()
@@ -56,11 +52,7 @@ export async function generateDesktopLesson(input: LessonGenerationRequest): Pro
 }
 
 export async function generateDesktopReplan(input: ReplanGenerationRequest): Promise<ReplanContract> {
-  if (input.plan.domainId !== "python") {
-    throw new Error(`Replanning is currently implemented only for Python plans. Received domain: ${input.plan.domainId}.`);
-  }
-
-  return generatePythonReplan({
+  return generateReplanForDomain({
     client: createStructuredClient(),
     input,
     model: resolveReplanModel()

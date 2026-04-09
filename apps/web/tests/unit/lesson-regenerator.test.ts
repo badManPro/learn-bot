@@ -15,8 +15,8 @@ const {
   buildPlanGenerationRequestMock,
   parseStoredLessonContractMock,
   parseStoredPlanContractMock,
-  generatePythonReplanMock,
-  generatePythonLessonMock
+  generateReplanForDomainMock,
+  generateLessonForDomainMock
 } = vi.hoisted(() => ({
   lessonFindUniqueMock: vi.fn(),
   lessonFindManyMock: vi.fn(),
@@ -32,8 +32,8 @@ const {
   buildPlanGenerationRequestMock: vi.fn(),
   parseStoredLessonContractMock: vi.fn(),
   parseStoredPlanContractMock: vi.fn(),
-  generatePythonReplanMock: vi.fn(),
-  generatePythonLessonMock: vi.fn()
+  generateReplanForDomainMock: vi.fn(),
+  generateLessonForDomainMock: vi.fn()
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -74,8 +74,8 @@ vi.mock("@/lib/ai/runtime", () => ({
 }));
 
 vi.mock("@learn-bot/ai-orchestrator", () => ({
-  generatePythonReplan: generatePythonReplanMock,
-  generatePythonLesson: generatePythonLessonMock
+  generateReplanForDomain: generateReplanForDomainMock,
+  generateLessonForDomain: generateLessonForDomainMock
 }));
 
 import { regenerateLesson } from "@/lib/ai/lesson-regenerator";
@@ -190,8 +190,8 @@ beforeEach(() => {
   buildPlanGenerationRequestMock.mockReset();
   parseStoredLessonContractMock.mockReset();
   parseStoredPlanContractMock.mockReset();
-  generatePythonReplanMock.mockReset();
-  generatePythonLessonMock.mockReset();
+  generateReplanForDomainMock.mockReset();
+  generateLessonForDomainMock.mockReset();
 
   transactionMock.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
     callback({
@@ -236,7 +236,7 @@ beforeEach(() => {
   });
   parseStoredLessonContractMock.mockImplementation((json: string) => JSON.parse(json));
   parseStoredPlanContractMock.mockImplementation((json: string) => JSON.parse(json));
-  generatePythonReplanMock.mockResolvedValue({
+  generateReplanForDomainMock.mockResolvedValue({
     replanReason: "too_hard",
     diagnosis: "The current lesson asks for too much implementation in one sitting.",
     paceChange: "Reduce pressure for the next lesson.",
@@ -255,7 +255,7 @@ beforeEach(() => {
     replacementLessonTitle: "Stabilize one input-output script",
     userMessage: "Keep the same goal, but shrink the next lesson to one small runnable script."
   });
-  generatePythonLessonMock.mockResolvedValue(replacementLesson);
+  generateLessonForDomainMock.mockResolvedValue(replacementLesson);
 });
 
 test("replaces the lesson through real replan and replacement generation", async () => {
@@ -267,8 +267,8 @@ test("replaces the lesson through real replan and replacement generation", async
   expect(result).not.toBeNull();
   expect(result?.changeSummary).toMatch(/shrink the next lesson/i);
   expect(result?.lesson.title).toBe("Stabilize one input-output script");
-  expect(generatePythonReplanMock).toHaveBeenCalled();
-  expect(generatePythonLessonMock).toHaveBeenCalled();
+  expect(generateReplanForDomainMock).toHaveBeenCalled();
+  expect(generateLessonForDomainMock).toHaveBeenCalled();
   expect(feedbackCreateMock).toHaveBeenCalledWith({
     data: {
       lessonId: "lesson_1",

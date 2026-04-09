@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-export const TaskTypeSchema = z.enum(["setup", "reading", "coding", "verification", "reflection"]);
+export const TaskTypeSchema = z.enum([
+  "setup",
+  "observation",
+  "reading",
+  "practice",
+  "production",
+  "coding",
+  "verification",
+  "reflection"
+]);
 export const VerificationMethodSchema = z.enum([
   "run_command",
   "self_check",

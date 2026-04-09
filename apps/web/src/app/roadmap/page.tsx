@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { supportsInteractiveDomain } from "@learn-bot/ai-orchestrator";
 import { MilestoneList } from "@learn-bot/ui";
 
 import { ensureCurrentPlanForUser } from "@/lib/ai/plan-generator";
@@ -49,6 +50,10 @@ export default async function RoadmapPage() {
             >
               开始今天一课
             </Link>
+          ) : !supportsInteractiveDomain(snapshot.planContract.domainId) ? (
+            <span className="inline-flex rounded-full bg-stone-300 px-5 py-3 text-sm font-medium text-stone-700">
+              当前 domain 暂为 roadmap-only
+            </span>
           ) : (
             <span className="inline-flex rounded-full bg-stone-300 px-5 py-3 text-sm font-medium text-stone-700">
               当前还没有 lesson

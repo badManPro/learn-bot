@@ -127,3 +127,61 @@ test("shows 3 milestones", async () => {
 
   expect(screen.getAllByTestId("milestone-card")).toHaveLength(3);
 });
+
+test("shows an explicit roadmap-only state for domains without lesson runtime support", async () => {
+  ensureCurrentPlanForUserMock.mockResolvedValueOnce({
+    plan: {
+      id: "plan_2",
+      goalPath: "drawing_foundations",
+      currentMilestoneIndex: 1
+    },
+    planContract: {
+      planTitle: "Drawing Foundations Roadmap",
+      domainId: "drawing",
+      tags: ["drawing", "beginner"],
+      goalSummary: "Build observation-first drawing basics.",
+      totalEstimatedWeeks: 3,
+      currentStrategy: "Keep the studies small and concrete.",
+      todayLessonSeed: {
+        milestoneId: "m1",
+        lessonType: "practice",
+        objective: "Observe and block in one simple form"
+      },
+      warnings: [],
+      milestones: [
+        {
+          id: "m1",
+          index: 1,
+          title: "Observe simple forms",
+          purpose: "Learn to look before marking.",
+          outcome: "One simple object can be sketched from reference.",
+          prerequisites: [],
+          successCriteria: ["The learner compares the sketch against the reference"],
+          recommendedWeeks: 1,
+          lessonTypes: ["practice"],
+          status: "active"
+        }
+      ]
+    },
+    milestones: [
+      {
+        id: "m1",
+        index: 1,
+        title: "Observe simple forms",
+        purpose: "Learn to look before marking.",
+        outcome: "One simple object can be sketched from reference.",
+        prerequisites: [],
+        successCriteria: ["The learner compares the sketch against the reference"],
+        recommendedWeeks: 1,
+        lessonTypes: ["practice"],
+        status: "active"
+      }
+    ],
+    currentLessonId: null,
+    currentLesson: null
+  });
+
+  render(await RoadmapPage());
+
+  expect(screen.getByText("当前 domain 暂为 roadmap-only")).toBeInTheDocument();
+});

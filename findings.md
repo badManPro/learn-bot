@@ -128,6 +128,11 @@
 - `packages/ai-orchestrator/src/plan.ts` now carries the generic plan entrypoint: it infers or respects the requested domain, injects richer domain-pack constraints into the system prompt, and normalizes the resulting roadmap back onto the chosen pack.
 - Web roadmap bootstrap now has a deliberate split by domain: Python still creates an initial lesson immediately, while piano and drawing currently persist the structured roadmap and milestone state without inventing a half-finished lesson generator.
 - The desktop shell now reflects the same boundary: `plan.generate` is domain-aware, while lesson/replan actions explicitly reject non-Python plans instead of silently running them through the Python prompts.
+- Phase 5 should promote `piano`, not `drawing`, to the second end-to-end lesson domain. Piano fits the current text-first product surface better because practice loops and self-checks can remain procedural and audible, while drawing likely needs richer visual critique before it becomes a good full-runtime path.
+- The remaining blocker is shared-contract bias: `packages/ai-contracts/src/lesson.ts` still hardcodes a `coding` task type even though the domain packs already describe non-coding lesson task families for piano and drawing.
+- That blocker is now removed. The shared lesson contract accepts non-coding task categories such as `practice` and `observation`, which keeps old Python lessons valid while allowing piano lessons to stay domain-appropriate.
+- Phase 5 is now live for `piano`: the orchestrator package now contains dedicated piano lesson and replan generators, web plan bootstrap creates real piano lessons, lesson regeneration routes piano replans through the same structured path, and the desktop shell accepts piano lesson/replan actions.
+- `drawing` remains intentionally gated as roadmap-only. The roadmap page now says so explicitly instead of only showing a blank lesson state.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -154,6 +159,7 @@
 | Bootstrap the real plan on `/roadmap` instead of inventing a separate Task 10 API hop | The plan and current lesson id already exist in server code, so this is the smallest glue layer |
 | Prefer a server form submission for lesson regeneration | It removes hydration timing from the critical path and keeps the E2E smoke test aligned with real browser behavior |
 | Restrict Vitest to unit tests only | Adding E2E coverage should not break the unit runner's test discovery |
+| Promote `piano` before `drawing` for Phase 5 full-runtime work | It proves non-Python lesson/replan generalization without pretending the current product can already critique visual drawing output well |
 
 ## Issues Encountered
 | Issue | Resolution |

@@ -1,6 +1,6 @@
 import type { ReplanReason } from "@prisma/client";
 import { PlanSchema, type LessonContract as LessonPayload } from "@learn-bot/ai-contracts";
-import { generatePythonLesson, generatePythonReplan } from "@learn-bot/ai-orchestrator";
+import { generateLessonForDomain, generateReplanForDomain } from "@learn-bot/ai-orchestrator";
 
 import { db } from "@/lib/db";
 
@@ -79,7 +79,7 @@ export async function regenerateLesson({
 
   const client = createWebStructuredModel();
   const request = buildPlanGenerationRequest(profile);
-  const replan = await generatePythonReplan({
+  const replan = await generateReplanForDomain({
     client,
     input: {
       ...request,
@@ -96,7 +96,7 @@ export async function regenerateLesson({
     todayLessonSeed: replan.replacementLessonSeed
   });
 
-  const replacementLesson = await generatePythonLesson({
+  const replacementLesson = await generateLessonForDomain({
     client,
     input: {
       ...request,

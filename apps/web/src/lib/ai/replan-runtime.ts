@@ -1,6 +1,6 @@
 import type { ReplanReason } from "@prisma/client";
 import type { LessonContract, PlanContract, ReplanContract } from "@learn-bot/ai-contracts";
-import { generatePythonReplan } from "@learn-bot/ai-orchestrator";
+import { generateReplanForDomain, supportsInteractiveDomain } from "@learn-bot/ai-orchestrator";
 
 import { db } from "@/lib/db";
 
@@ -59,6 +59,10 @@ export async function loadCurrentReplanContext(userId: string): Promise<WebRepla
     return null;
   }
 
+  if (!supportsInteractiveDomain(planContract.domainId)) {
+    return null;
+  }
+
   const activeLessonRecord = planRecord.lessons.find((lesson) => lesson.status === "active");
   const currentLesson = parseStoredLessonContract(activeLessonRecord?.contractJson);
 
@@ -101,7 +105,7 @@ export async function generateWebReplanPreview(userId: string, reason: ReplanRea
 
   const client = createWebStructuredModel();
   const request = buildPlanGenerationRequest(profile);
-  const replan = await generatePythonReplan({
+  const replan = await generateReplanForDomain({
     client,
     input: {
       ...request,

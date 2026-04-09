@@ -34,10 +34,10 @@ Phase 5
 - **Status:** complete
 
 ### Phase 5: Lesson generation and replanning
-- [ ] Decide whether `piano` or `drawing` becomes the second full end-to-end lesson domain after Python
-- [ ] Generalize lesson generation beyond Python or keep roadmap-only domains explicitly gated
-- [ ] Generalize replan/runtime behavior so non-Python plans have a coherent follow-up path
-- **Status:** pending
+- [x] Decide whether `piano` or `drawing` becomes the second full end-to-end lesson domain after Python
+- [x] Generalize lesson generation beyond Python or keep roadmap-only domains explicitly gated
+- [x] Generalize replan/runtime behavior so non-Python plans have a coherent follow-up path
+- **Status:** complete
 
 ## Phases
 
@@ -85,6 +85,7 @@ Phase 5
 | Treat the current deterministic roadmap and lesson generators as transitional code that should be removed | The user explicitly wants no template fallback and real-model generation only |
 | Separate product discussion into generation, platform/auth, and UI contract tracks | These decisions are tightly coupled and cannot be solved with prompt edits alone |
 | Validate OpenAI authentication assumptions against current official docs before proposing an auth design | The requested “login with ChatGPT then close the page” flow is easy to assume incorrectly |
+| Promote `piano` to the second end-to-end lesson domain before `drawing` | Piano practice can be expressed cleanly through the existing text-first product surface, while drawing likely needs richer visual feedback before it becomes a good full-runtime candidate |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
@@ -119,6 +120,8 @@ Phase 5
 - Phase 4 is now complete as well: onboarding goal mapping supports Python, piano, and drawing; plan generation routes into the matching domain pack; and the active web runtime can now persist and reload non-Python roadmaps without forcing a Python lesson.
 - The current boundary is intentional: multi-domain roadmap generation is live, but lesson generation and replanning still remain Python-only in the active product flow.
 - The next concrete implementation target is Phase 5: choose the next non-Python domain to carry through lesson generation and replanning, or formalize roadmap-only gating until that path is built.
+- Phase 5 is now in progress: `piano` is the chosen second lesson domain, `drawing` remains roadmap-only for now, and the main technical blocker is that the shared lesson contract still carries a Python-biased `coding` task type.
+- Phase 5 is now implemented in code: `piano` lesson generation and replanning run through the real orchestrator in both web and desktop paths, the shared lesson contract now accepts non-coding task types, and `drawing` is explicitly surfaced as roadmap-only until a richer visual-feedback path exists.
 
 ---
 

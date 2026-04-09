@@ -1,6 +1,6 @@
 import type { Plan } from "@prisma/client";
 import type { LessonContract, PlanContract, RoadmapMilestone } from "@learn-bot/ai-contracts";
-import { generatePlan, generatePythonLesson } from "@learn-bot/ai-orchestrator";
+import { generateLessonForDomain, generatePlan, supportsInteractiveDomain } from "@learn-bot/ai-orchestrator";
 
 import { db } from "@/lib/db";
 import { goalPathToDomainPackId } from "@/lib/ai/goal-paths";
@@ -33,8 +33,8 @@ async function generateInitialArtifacts(input: Parameters<typeof buildPlanGenera
     model: resolvePlanModel()
   });
   const lessonContract =
-    planContract.domainId === "python"
-      ? await generatePythonLesson({
+    supportsInteractiveDomain(planContract.domainId)
+      ? await generateLessonForDomain({
           client,
           input: {
             ...request,
@@ -86,7 +86,7 @@ export async function ensureCurrentPlanForUser(userId: string): Promise<CurrentP
   const existingLessonRecord = existingPlan?.lessons[0];
   const existingLessonContract = parseStoredLessonContract(existingLessonRecord?.contractJson);
   const existingPlanMatchesGoal = existingPlan?.goalPath === goalPath && existingPlanContract?.domainId === expectedDomainId;
-  const existingPlanSupportsLesson = existingPlanContract?.domainId === "python";
+  const existingPlanSupportsLesson = existingPlanContract ? supportsInteractiveDomain(existingPlanContract.domainId) : false;
 
   if (
     existingPlan &&
