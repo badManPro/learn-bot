@@ -1,10 +1,14 @@
 # Phase 1 Execution Plan: Repo and Architecture Reset
 
 Date: 2026-04-08
-Status: Proposed
+Status: Complete
 Parent Plans:
 - `docs/plans/2026-04-08-ai-native-multi-domain-rebuild-plan.md`
 - `docs/plans/2026-04-08-electron-migration-plan.md`
+
+Execution note:
+- Tasks 1 to 7 were implemented on 2026-04-08.
+- Tasks 8 to 10 were completed on 2026-04-09, including boundary lint rules, typed desktop preload contracts, mocked `lesson.generate`, and a verified Electron dev boot.
 
 ## 1. Goal
 

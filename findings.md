@@ -27,6 +27,10 @@
 - The web app now imports shared contracts and shared UI components, which proves the extraction path works without breaking the current product flow.
 - The Python domain pack now has a base pack plus an `automation` overlay, which matches the updated domain-family direction instead of forcing one pack per narrow subtopic.
 - The Electron scaffold now builds successfully and can start through `electron-vite dev`; the final runtime blocker encountered during bring-up was dependency installation policy for Electron, which was resolved by allowing built dependencies and reinstalling.
+- Phase 1 Task 8 is now complete: `eslint.config.mjs` enforces that `packages/ui` cannot import Prisma and that the desktop renderer cannot import Electron main/preload modules directly.
+- Phase 1 Task 9 is now complete: the desktop shell exposes typed preload APIs for `auth.login`, `auth.session.get`, `plan.generate`, and `lesson.generate`, with shared contract types under `apps/desktop/shared/contracts.ts`.
+- The first 2026-04-09 Electron dev verification exposed a real runtime issue: `electron-vite` was externalizing workspace packages, so the Electron main process handed raw TypeScript package sources to Node, which then failed on extensionless ESM re-exports in `packages/ai-contracts`.
+- Excluding the workspace packages from Electron dependency externalization fixed the dev boot path, and the desktop app now reaches `starting electron app...` without the prior module-resolution crash.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.
@@ -125,6 +129,7 @@
 | Onboarding redirect lost the guest cookie by changing hosts | Changed the route handler to emit `location: /roadmap` for form posts |
 | The first lesson regeneration button path was hydration-dependent | Replaced the client fetch button with a plain form POST to the existing regeneration route |
 | Vitest started collecting E2E files and dependency test suites | Added explicit `include`/`exclude` patterns in `vitest.config.ts` |
+| Electron desktop dev crashed on workspace package ESM resolution | Stopped externalizing `@learn-bot/*` packages in `apps/desktop/electron.vite.config.ts` so Electron dev bundles those sources instead of handing raw TS modules to Node |
 
 ## Resources
 - `/Users/casper/Documents/project/test-skills/docs/plans/2026-04-05-ai-learning-assistant-tech-spec.md`

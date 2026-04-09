@@ -3,6 +3,6 @@
   "compilerOptions": {
     "baseUrl": "."
   },
-  "include": ["electron-main/**/*.ts", "electron-preload/**/*.ts", "renderer/**/*.ts", "renderer/**/*.tsx"],
+  "include": ["electron-main/**/*.ts", "electron-preload/**/*.ts", "renderer/**/*.ts", "renderer/**/*.tsx", "shared/**/*.ts"],
   "exclude": ["node_modules"]
 }

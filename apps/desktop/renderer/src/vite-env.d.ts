@@ -1,18 +1,10 @@
 /// <reference types="vite/client" />
 
+import type { DesktopApi } from "../../shared/contracts";
+
 declare global {
   interface Window {
-    desktopApi: {
-      auth: {
-        login: () => Promise<unknown>;
-        session: {
-          get: () => Promise<unknown>;
-        };
-      };
-      plan: {
-        generate: () => Promise<unknown>;
-      };
-    };
+    desktopApi: DesktopApi;
   }
 }
 

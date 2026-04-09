@@ -1,5 +1,2 @@
-export const ipcChannels = {
-  authLogin: "auth:login",
-  authSessionGet: "auth:session:get",
-  planGenerate: "plan:generate"
-} as const;
+export { ipcChannels } from "../../shared/contracts";
+export type { DesktopApi, DesktopSession, DesktopSessionStatus } from "../../shared/contracts";

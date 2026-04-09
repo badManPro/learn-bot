@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { ipcChannels } from "../electron-main/ipc/contracts";
+import type { DesktopApi } from "../shared/contracts";
+import { ipcChannels } from "../shared/contracts";
 
-export const desktopApi = {
+export const desktopApi: DesktopApi = {
   auth: {
     login: () => ipcRenderer.invoke(ipcChannels.authLogin),
     session: {
@@ -11,6 +12,9 @@ export const desktopApi = {
   },
   plan: {
     generate: () => ipcRenderer.invoke(ipcChannels.planGenerate)
+  },
+  lesson: {
+    generate: () => ipcRenderer.invoke(ipcChannels.lessonGenerate)
   }
 };
 

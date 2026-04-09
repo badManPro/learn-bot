@@ -67,6 +67,7 @@ Phase 2
 - The auth direction has been revised to match a Codex-style browser login requirement, and the Electron migration plan now lives at `docs/plans/2026-04-08-electron-migration-plan.md`.
 - The concrete Phase 1 task breakdown now lives at `docs/plans/2026-04-08-phase-1-execution-plan.md`.
 - Phase 1 workspace restructuring has now been implemented in code: the web app lives in `apps/web`, shared packages exist under `packages/*`, and the Electron shell scaffold lives in `apps/desktop`.
+- The remaining Phase 1 tasks are now complete as well: boundary lint rules are in place, the desktop preload API is typed through shared contracts, mocked `plan.generate` and `lesson.generate` both render in the shell, and Electron dev boot succeeds without the previous workspace-package resolution error.
 
 ---
 
