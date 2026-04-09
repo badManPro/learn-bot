@@ -1,6 +1,6 @@
 # AI Learning Assistant MVP
 
-一个基于 Next.js App Router 的 AI 学习助手 MVP。当前 v0 只支持单一路径 `python_for_ai_workflows`，覆盖 onboarding、roadmap、today lesson、lesson regeneration 和基础进度流转。
+一个基于 Next.js App Router 和 Electron workspace 的 AI 学习助手实验项目。当前只支持单一路径 `python_for_ai_workflows`，并且 roadmap、lesson、replan 已经优先走真实 structured-output AI runtime。
 
 ## Stack
 
@@ -45,11 +45,11 @@
 
 ```bash
 DATABASE_URL="file:./prisma/dev.db"
-OPENAI_API_KEY=""
+OPENAI_API_KEY="sk-..."
 ```
 
 - `DATABASE_URL`: 本地 SQLite 数据库地址。
-- `OPENAI_API_KEY`: 目前为可选，预留给后续真实 AI 调用。
+- `OPENAI_API_KEY`: web 与 desktop 的真实 AI runtime 都需要它；未配置时只会返回显式错误，不再回退到旧的 deterministic preview。
 
 ## Run Commands
 

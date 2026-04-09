@@ -1,21 +1,19 @@
-import { generatePlanBlueprint } from "@/lib/ai/plan-generator";
+import { buildPlanGenerationRequest } from "@/lib/ai/runtime";
 import { derivePaceMode } from "@/lib/domain/replan";
 
 test("maps mbti and weekly budget to a pace mode", () => {
   expect(derivePaceMode({ mbti: "INFP", weeklyTimeBudgetMinutes: 120 })).toBe("slower");
 });
 
-test("keeps milestone structure while slowing the first lesson pace", () => {
-  const blueprint = generatePlanBlueprint({
-    goalPath: "python_for_ai_workflows",
+test("builds a structured plan request from the persisted learner profile", () => {
+  const request = buildPlanGenerationRequest({
     goalText: "我想学 Python 做 AI 工作流",
     currentLevel: "zero",
     weeklyTimeBudgetMinutes: 120,
-    targetDeadline: "2026-05-05",
-    mbti: "INFP",
-    paceMode: "slower"
+    targetDeadline: new Date("2026-05-05T00:00:00.000Z"),
+    mbti: "INFP"
   });
 
-  expect(blueprint.milestones).toHaveLength(3);
-  expect(blueprint.firstLesson.tasks).toHaveLength(4);
+  expect(request.targetDeadline).toBe("2026-05-05");
+  expect(request.goalText).toContain("Python");
 });

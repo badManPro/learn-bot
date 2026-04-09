@@ -78,6 +78,8 @@ Phase 2
 - The active implementation slice is now exactly that follow-up: wire a real desktop `plan.replan` path and let `lesson.generate` accept lesson history plus override lesson seeds so replacement and follow-up lessons can stay on the same orchestrated path.
 - That slice is now implemented as well: desktop `plan.replan` calls a real Python replan orchestrator, and desktop `lesson.generate` now supports follow-up and replacement generation with lesson history plus override seeds.
 - The next concrete follow-up is now narrower: remove the remaining web deterministic runtime generators from the active product path and decide whether they become archived compatibility code or are deleted outright.
+- That web-runtime cleanup is now implemented for the active onboarding -> roadmap -> lesson -> lesson-regeneration path: web plan creation, lesson reading, and lesson regeneration now use persisted structured contracts plus the real orchestrator instead of deterministic preview generators.
+- The remaining explicit legacy surface is the standalone web `/replan` page and `/api/plan/replan` route, which still use deterministic compatibility logic and are no longer the primary recovery path.
 
 ---
 

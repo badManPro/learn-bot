@@ -1,4 +1,4 @@
-import { lessonPayloadSchema } from "@/lib/ai/lesson-generator";
+import { LessonSchema as lessonPayloadSchema } from "@learn-bot/ai-contracts";
 
 test("lesson payload has 2 to 4 tasks and one quiz", () => {
   const result = lessonPayloadSchema.safeParse({

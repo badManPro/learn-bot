@@ -51,6 +51,11 @@
 - `packages/ai-orchestrator/src/python-lesson.ts` now supports `generationMode` (`initial`, `follow_up`, `replacement`) and `lessonHistory`, so the same lesson generator can produce both follow-up lessons and replacement lessons without a second API surface.
 - The desktop renderer now exposes all three visible flows in one shell: initial lesson generation, follow-up lesson generation, and structured replanning that can immediately generate a replacement lesson from the returned seed.
 - Focused orchestrator tests and broader verification are green for this pass too: plan/lesson/replan orchestrator tests pass, desktop build passes, web build passes, and boundary lint still passes.
+- The web active runtime path is no longer deterministic either. `apps/web/src/lib/ai/plan-generator.ts` now creates and persists real `PlanContract` and `LessonContract` objects through the shared orchestrator package, instead of constructing blueprint milestones and a hardcoded first lesson locally.
+- Web persistence now stores structured contracts directly in Prisma via `Plan.contractJson` and `Lesson.contractJson`, which lets roadmap and lesson pages read validated contracts instead of reconstructing partial objects from sparse legacy columns.
+- `apps/web/src/lib/ai/lesson-regenerator.ts` now routes “too hard” recovery through `generatePythonReplan` plus `generatePythonLesson(replacement)`, updates the stored plan seed, and persists the replacement lesson contract back onto the same lesson record.
+- The old `apps/web/src/lib/ai/lesson-generator.ts` preview module has been removed from the active codepath entirely; tests that previously depended on implicit preview fallbacks now mock real plan/lesson snapshots or validate against shared schemas directly.
+- Residual legacy note: the standalone web `/replan` page and `/api/plan/replan` route still use the older deterministic compatibility helper. They are no longer the primary recovery path, but they remain as the last explicit legacy slice.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.

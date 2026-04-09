@@ -87,6 +87,7 @@ model Plan {
   targetEndDate         DateTime
   currentMilestoneIndex Int         @default(1)
   daysInactiveCount     Int         @default(0)
+  contractJson          String?
   user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   milestones            Milestone[]
   lessons               Lesson[]
@@ -113,6 +114,7 @@ model Lesson {
   title               String
   whyItMatters        String
   completionCriteria  String
+  contractJson        String?
   status              LessonStatus         @default(pending)
   regenerationCount   Int                  @default(0)
   generatedFromReason ReplanReason?

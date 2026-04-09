@@ -37,33 +37,43 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await regenerateLesson({
-    lessonId,
-    reason: reason as ReplanReason,
-    regenerationCount
-  });
+  try {
+    const result = await regenerateLesson({
+      lessonId,
+      reason: reason as ReplanReason,
+      regenerationCount
+    });
 
-  if (!result) {
+    if (!result) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message: "Lesson not found."
+        },
+        { status: 404 }
+      );
+    }
+
+    if (!expectsJson) {
+      const response = NextResponse.redirect(request.url, 303);
+      response.headers.set("location", ROUTES.lesson(result.lessonId));
+      return response;
+    }
+
+    return NextResponse.json({
+      status: "ok",
+      lessonId: result.lessonId,
+      milestoneId: result.milestoneId,
+      regenerationCount: result.regenerationCount,
+      changeSummary: result.changeSummary
+    });
+  } catch (error) {
     return NextResponse.json(
       {
         status: "error",
-        message: "Lesson not found."
+        message: error instanceof Error ? error.message : "Lesson regeneration failed."
       },
-      { status: 404 }
+      { status: 503 }
     );
   }
-
-  if (!expectsJson) {
-    const response = NextResponse.redirect(request.url, 303);
-    response.headers.set("location", ROUTES.lesson(result.lessonId));
-    return response;
-  }
-
-  return NextResponse.json({
-    status: "ok",
-    lessonId: result.lessonId,
-    milestoneId: result.milestoneId,
-    regenerationCount: result.regenerationCount,
-    changeSummary: result.changeSummary
-  });
 }

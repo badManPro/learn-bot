@@ -228,6 +228,43 @@
   - `apps/web/tests/unit/python-lesson-orchestrator.test.ts` (updated)
   - `apps/web/tests/unit/python-replan-orchestrator.test.ts` (created)
 
+### Phase 11: Web Runtime De-Determinization
+- **Status:** complete
+- Actions taken:
+  - Chose the cleaner removal path for the remaining web deterministic generators: rewire the active web runtime onto the shared orchestrator instead of merely hiding or archiving the web UI.
+  - Added `contractJson` persistence fields to `Plan` and `Lesson` so the web app can store and reload validated structured contracts directly.
+  - Added `apps/web/src/lib/ai/runtime.ts` to centralize web OpenAI client creation, model selection, request building, and stored-contract parsing.
+  - Rebuilt `apps/web/src/lib/ai/plan-generator.ts` so the web onboarding -> roadmap path now creates real AI-generated plans and first lessons, persists those structured contracts, and rehydrates them from Prisma on later reads.
+  - Rebuilt `apps/web/src/lib/ai/lesson-regenerator.ts` so the web lesson-regeneration path now uses real replan plus replacement-lesson generation and persists the resulting replacement contract.
+  - Removed the old deterministic `apps/web/src/lib/ai/lesson-generator.ts` preview module from the active codepath and updated pages/tests to consume stored contracts or explicit mocks instead.
+  - Updated roadmap and lesson pages to stop silently falling back to deterministic preview content when no stored contract exists.
+  - Updated README so `OPENAI_API_KEY` is documented as required for the real AI runtime.
+- Verification:
+  - `pnpm --filter @learn-bot/web test -- --run tests/unit/roadmap-page.test.tsx tests/unit/lesson-page.test.tsx tests/unit/lesson-regenerator.test.ts tests/unit/lesson-schema.test.ts tests/unit/pace-mode.test.ts tests/unit/python-plan-orchestrator.test.ts tests/unit/python-lesson-orchestrator.test.ts tests/unit/python-replan-orchestrator.test.ts` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm lint:boundaries` ✅
+- Files created/modified:
+  - `README.md` (updated)
+  - `apps/web/prisma/schema.prisma` (updated)
+  - `apps/web/src/lib/ai/runtime.ts` (created)
+  - `apps/web/src/lib/ai/plan-generator.ts` (rewritten)
+  - `apps/web/src/lib/ai/lesson-regenerator.ts` (rewritten)
+  - `apps/web/src/lib/ai/lesson-generator.ts` (deleted)
+  - `apps/web/src/app/roadmap/page.tsx` (updated)
+  - `apps/web/src/app/lesson/[lessonId]/page.tsx` (updated)
+  - `apps/web/src/app/api/plan/generate/route.ts` (updated)
+  - `apps/web/src/app/api/plan/current/route.ts` (updated)
+  - `apps/web/src/app/api/lesson/regenerate/route.ts` (updated)
+  - `apps/web/src/components/lesson/lesson-shell.tsx` (updated)
+  - `apps/web/tests/unit/roadmap-page.test.tsx` (updated)
+  - `apps/web/tests/unit/lesson-page.test.tsx` (updated)
+  - `apps/web/tests/unit/lesson-regenerator.test.ts` (updated)
+  - `apps/web/tests/unit/lesson-schema.test.ts` (updated)
+  - `apps/web/tests/unit/pace-mode.test.ts` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

@@ -1,122 +1,51 @@
-import type { CurrentLevel, PaceMode, Plan, GoalPath } from "@prisma/client";
-import type { LessonContract as LessonPayload, RoadmapMilestone } from "@learn-bot/ai-contracts";
+import type { Plan } from "@prisma/client";
+import type { LessonContract, PlanContract, RoadmapMilestone } from "@learn-bot/ai-contracts";
+import { generatePythonLesson, generatePythonPlan } from "@learn-bot/ai-orchestrator";
 
 import { db } from "@/lib/db";
-import { generateFirstLessonPayload } from "@/lib/ai/lesson-generator";
-import { derivePaceMode } from "@/lib/domain/replan";
 
-export type PlanGenerationInput = {
-  goalPath: GoalPath;
-  goalText: string;
-  currentLevel: CurrentLevel;
-  weeklyTimeBudgetMinutes: number;
-  targetDeadline: string;
-  mbti?: string | null;
-  paceMode: PaceMode;
-};
+import {
+  buildPlanGenerationRequest,
+  createWebStructuredModel,
+  isSupportedGoalPath,
+  parseStoredLessonContract,
+  parseStoredPlanContract,
+  resolveLessonModel,
+  resolvePlanModel,
+  stringifyContract
+} from "./runtime";
 
-export type PlanGenerationOutput = {
-  milestones: RoadmapMilestone[];
-  firstLesson: LessonPayload;
-};
-
-type CurrentPlanSnapshot = {
+export type CurrentPlanSnapshot = {
   plan: Plan;
+  planContract: PlanContract;
   milestones: RoadmapMilestone[];
   currentLessonId: string | null;
+  currentLesson: LessonContract | null;
 };
 
-function enrichMilestones(milestones: Array<{ index: number; title: string; outcome: string; status: RoadmapMilestone["status"] }>) {
-  const defaultsByIndex = new Map(buildMilestones().map((milestone) => [milestone.index, milestone]));
-
-  return milestones.map((milestone) => {
-    const fallback = defaultsByIndex.get(milestone.index);
-
-    return {
-      id: fallback?.id ?? `milestone-${milestone.index}`,
-      index: milestone.index,
-      title: milestone.title,
-      purpose: fallback?.purpose ?? milestone.outcome,
-      outcome: milestone.outcome,
-      prerequisites: fallback?.prerequisites ?? [],
-      successCriteria: fallback?.successCriteria ?? [milestone.outcome],
-      recommendedWeeks: fallback?.recommendedWeeks ?? 1,
-      lessonTypes: fallback?.lessonTypes ?? ["practice"],
-      status: milestone.status
-    } satisfies RoadmapMilestone;
+async function generateInitialArtifacts(input: Parameters<typeof buildPlanGenerationRequest>[0]) {
+  const client = createWebStructuredModel();
+  const request = buildPlanGenerationRequest(input);
+  const planContract = await generatePythonPlan({
+    client,
+    input: request,
+    model: resolvePlanModel()
   });
-}
-
-function buildMilestones(): RoadmapMilestone[] {
-  return [
-    {
-      id: "environment-bootstrap",
-      index: 1,
-      title: "打通 Python 起步环境",
-      purpose: "建立一个稳定、可重复执行的 Python 练习环境，避免后续学习被环境问题打断。",
-      outcome: "能在本地稳定运行 Python 脚本和简单命令行交互。",
-      prerequisites: [],
-      successCriteria: ["终端能输出 Python 版本", "可以独立运行一个最小脚本"],
-      recommendedWeeks: 1,
-      lessonTypes: ["setup", "practice"],
-      status: "active"
+  const lessonContract = await generatePythonLesson({
+    client,
+    input: {
+      ...request,
+      plan: planContract,
+      generationMode: "initial",
+      lessonHistory: []
     },
-    {
-      id: "first-working-tool",
-      index: 2,
-      title: "完成第一个假 AI 命令行助手",
-      purpose: "把输入、处理、输出串成一个闭环，建立对脚本工作流的直觉。",
-      outcome: "做出一个可输入问题并返回固定答案的 CLI 小工具。",
-      prerequisites: ["environment-bootstrap"],
-      successCriteria: ["脚本能读取用户输入", "脚本能输出稳定结果"],
-      recommendedWeeks: 1,
-      lessonTypes: ["practice", "project"],
-      status: "pending"
-    },
-    {
-      id: "workflow-variants",
-      index: 3,
-      title: "做出两个可修改变体",
-      purpose: "开始抽象和复用，把一个练习扩展成多个可修改场景。",
-      outcome: "把 CLI 小工具改成两个不同场景的变体，形成 30 天内的阶段成果。",
-      prerequisites: ["first-working-tool"],
-      successCriteria: ["至少完成两个变体", "每个变体都能独立运行"],
-      recommendedWeeks: 2,
-      lessonTypes: ["project", "review"],
-      status: "pending"
-    }
-  ];
-}
-
-export function generatePlanBlueprint(input: PlanGenerationInput): PlanGenerationOutput {
-  const effectivePaceMode =
-    input.paceMode === "default"
-      ? derivePaceMode({
-          mbti: input.mbti,
-          weeklyTimeBudgetMinutes: input.weeklyTimeBudgetMinutes
-        })
-      : input.paceMode;
+    model: resolveLessonModel()
+  });
 
   return {
-    milestones: buildMilestones(),
-    firstLesson: generateFirstLessonPayload({
-      currentLevel: input.currentLevel,
-      goalText: input.goalText,
-      paceMode: effectivePaceMode
-    })
+    planContract,
+    lessonContract
   };
-}
-
-export function getRoadmapPreview(): PlanGenerationOutput {
-  return generatePlanBlueprint({
-    goalPath: "python_for_ai_workflows",
-    goalText: "我想学 Python 做 AI 工作流",
-    currentLevel: "zero",
-    weeklyTimeBudgetMinutes: 240,
-    targetDeadline: "2026-05-05",
-    mbti: null,
-    paceMode: "default"
-  });
 }
 
 export async function ensureCurrentPlanForUser(userId: string): Promise<CurrentPlanSnapshot | null> {
@@ -124,64 +53,88 @@ export async function ensureCurrentPlanForUser(userId: string): Promise<CurrentP
     where: { userId }
   });
 
-  const goalPath = profile?.goalPath;
-
-  if (!profile || !goalPath) {
+  if (!profile || !isSupportedGoalPath(profile.goalPath)) {
     return null;
   }
 
-  return db.$transaction(async (tx) => {
-    const existingPlan = await tx.plan.findFirst({
-      where: {
-        userId,
-        status: "active"
-      },
-      include: {
-        milestones: {
-          orderBy: { index: "asc" }
+  const goalPath = profile.goalPath;
+
+  const existingPlan = await db.plan.findFirst({
+    where: {
+      userId,
+      status: "active"
+    },
+    include: {
+      lessons: {
+        where: {
+          status: "active"
         },
-        lessons: {
-          where: {
-            status: "active"
-          },
-          orderBy: { dayIndex: "asc" },
-          take: 1
-        }
+        orderBy: {
+          dayIndex: "asc"
+        },
+        take: 1
       }
-    });
+    }
+  });
+
+  const existingPlanContract = parseStoredPlanContract(existingPlan?.contractJson);
+  const existingLessonRecord = existingPlan?.lessons[0];
+  const existingLessonContract = parseStoredLessonContract(existingLessonRecord?.contractJson);
+
+  if (existingPlan && existingPlanContract && existingLessonRecord && existingLessonContract) {
+    return {
+      plan: existingPlan,
+      planContract: existingPlanContract,
+      milestones: existingPlanContract.milestones,
+      currentLessonId: existingLessonRecord.id,
+      currentLesson: existingLessonContract
+    };
+  }
+
+  const { planContract, lessonContract } = await generateInitialArtifacts(profile);
+  const activeMilestone = planContract.milestones.find((milestone) => milestone.status === "active") ?? planContract.milestones[0];
+
+  if (!activeMilestone) {
+    throw new Error("Generated roadmap did not include an active milestone.");
+  }
+
+  return db.$transaction(async (tx) => {
+    const plan = existingPlan
+      ? await tx.plan.update({
+          where: { id: existingPlan.id },
+          data: {
+            goalPath,
+            targetStartDate: new Date(),
+            targetEndDate: profile.targetDeadline,
+            currentMilestoneIndex: activeMilestone.index,
+            daysInactiveCount: 0,
+            contractJson: stringifyContract(planContract)
+          }
+        })
+      : await tx.plan.create({
+          data: {
+            userId,
+            goalPath,
+            status: "active",
+            targetStartDate: new Date(),
+            targetEndDate: profile.targetDeadline,
+            currentMilestoneIndex: activeMilestone.index,
+            daysInactiveCount: 0,
+            contractJson: stringifyContract(planContract)
+          }
+        });
 
     if (existingPlan) {
-      return {
-        plan: existingPlan,
-        milestones: enrichMilestones(existingPlan.milestones),
-        currentLessonId: existingPlan.lessons[0]?.id ?? null
-      };
+      await tx.lesson.deleteMany({
+        where: { planId: existingPlan.id }
+      });
+      await tx.milestone.deleteMany({
+        where: { planId: existingPlan.id }
+      });
     }
 
-    const blueprint = generatePlanBlueprint({
-      goalPath,
-      goalText: profile.goalText,
-      currentLevel: profile.currentLevel,
-      weeklyTimeBudgetMinutes: profile.weeklyTimeBudgetMinutes,
-      targetDeadline: profile.targetDeadline.toISOString().slice(0, 10),
-      mbti: profile.mbti,
-      paceMode: profile.paceMode
-    });
-
-    const plan = await tx.plan.create({
-      data: {
-        userId,
-        goalPath,
-        status: "active",
-        targetStartDate: new Date(),
-        targetEndDate: profile.targetDeadline,
-        currentMilestoneIndex: 1,
-        daysInactiveCount: 0
-      }
-    });
-
-    const milestones = await Promise.all(
-      blueprint.milestones.map((milestone) =>
+    const milestoneRecords = await Promise.all(
+      planContract.milestones.map((milestone) =>
         tx.milestone.create({
           data: {
             planId: plan.id,
@@ -194,20 +147,25 @@ export async function ensureCurrentPlanForUser(userId: string): Promise<CurrentP
       )
     );
 
-    const firstMilestone = milestones[0];
-    const lesson = blueprint.firstLesson;
+    const activeMilestoneRecord =
+      milestoneRecords.find((milestone) => milestone.index === activeMilestone.index) ?? milestoneRecords[0];
+
+    if (!activeMilestoneRecord) {
+      throw new Error("Persisted roadmap contains no milestone records.");
+    }
 
     const createdLesson = await tx.lesson.create({
       data: {
         planId: plan.id,
-        milestoneId: firstMilestone.id,
+        milestoneId: activeMilestoneRecord.id,
         dayIndex: 1,
-        title: lesson.title,
-        whyItMatters: lesson.whyItMatters,
-        completionCriteria: lesson.completionCriteria,
+        title: lessonContract.title,
+        whyItMatters: lessonContract.whyItMatters,
+        completionCriteria: lessonContract.completionCriteria,
+        contractJson: stringifyContract(lessonContract),
         status: "active",
         tasks: {
-          create: lesson.tasks.map((task, index) => ({
+          create: lessonContract.tasks.map((task, index) => ({
             orderIndex: index + 1,
             title: task.title,
             instructions: task.instructions,
@@ -217,10 +175,10 @@ export async function ensureCurrentPlanForUser(userId: string): Promise<CurrentP
         },
         quiz: {
           create: {
-            kind: lesson.quiz.kind,
-            question: lesson.quiz.question,
-            optionsJson: JSON.stringify(lesson.quiz.options),
-            correctAnswer: lesson.quiz.correctAnswer
+            kind: lessonContract.quiz.kind,
+            question: lessonContract.quiz.question,
+            optionsJson: JSON.stringify(lessonContract.quiz.options),
+            correctAnswer: lessonContract.quiz.correctAnswer
           }
         }
       }
@@ -228,8 +186,10 @@ export async function ensureCurrentPlanForUser(userId: string): Promise<CurrentP
 
     return {
       plan,
-      milestones: enrichMilestones(milestones),
-      currentLessonId: createdLesson.id
+      planContract,
+      milestones: planContract.milestones,
+      currentLessonId: createdLesson.id,
+      currentLesson: lessonContract
     };
   });
 }

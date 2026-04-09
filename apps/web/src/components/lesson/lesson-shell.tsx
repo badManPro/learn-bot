@@ -1,4 +1,4 @@
-import type { LessonPayload } from "@/lib/ai/lesson-generator";
+import type { LessonContract as LessonPayload } from "@learn-bot/ai-contracts";
 import { QuizCard, RegenerationBanner, TaskCard } from "@learn-bot/ui";
 
 type LessonShellProps = {
