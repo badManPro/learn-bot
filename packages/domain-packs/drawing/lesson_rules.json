@@ -1,0 +1,14 @@
+{
+  "defaultTaskCountRange": [2, 5],
+  "defaultTaskMinutesRange": [10, 25],
+  "acceptableLessonFormats": ["observation-study", "construction-drill", "value-study"],
+  "allowedTaskTypes": ["warmup-lines", "reference-observation", "thumbnail-sketch", "value-block-in", "self-critique"],
+  "mustInclude": ["observation-step", "production-step", "self-critique-step"],
+  "forbiddenPatterns": ["finished-illustration-in-one-lesson", "draw-without-reference-when-learning-a-new-form", "too-many-new-fundamentals-at-once"],
+  "equipmentOrEnvironment": ["Sketchbook and pen or pencil, or tablet and stylus", "Reference image or simple real object", "Adequate lighting"],
+  "pedagogyConstraints": [
+    "Focus on one visual skill at a time.",
+    "Require looking before marking.",
+    "Make evaluation criteria concrete enough for self-review."
+  ]
+}

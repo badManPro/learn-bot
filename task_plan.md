@@ -4,7 +4,40 @@
 Replace deterministic template-based roadmap and lesson generation with a real-model architecture, support multiple learning domains, define the Electron and authentication direction, and produce an implementation plan that drives the next product phase.
 
 ## Current Phase
-Phase 2
+Phase 5
+
+## Rebuild Phase Tracker
+
+### Phase 1: Repo and architecture reset
+- [x] Convert the repo into a workspace with extracted packages
+- [x] Keep the current web app running during the transition
+- [x] Scaffold the Electron shell and typed preload bridge
+- **Status:** complete
+
+### Phase 2: Real AI orchestration foundation
+- [x] Add the shared AI orchestrator package
+- [x] Move active web and desktop generation paths onto real structured-output model calls
+- [x] Remove deterministic roadmap, lesson, and replan behavior from the active runtime path
+- **Status:** complete
+
+### Phase 3: Domain-pack v1
+- [x] Keep Python as the first real-AI domain pack
+- [x] Add base `piano` and `drawing` packs
+- [x] Deepen pack data so each domain carries lesson constraints, environment assumptions, and critique checks
+- [x] Export a multi-domain registry with lookup helpers and integrity tests
+- **Status:** complete
+
+### Phase 4: Plan generation
+- [x] Route goal understanding into the correct domain pack instead of assuming Python
+- [x] Use the selected domain pack in roadmap generation prompts
+- [x] Persist and reload non-Python plans through the active runtime path
+- **Status:** complete
+
+### Phase 5: Lesson generation and replanning
+- [ ] Decide whether `piano` or `drawing` becomes the second full end-to-end lesson domain after Python
+- [ ] Generalize lesson generation beyond Python or keep roadmap-only domains explicitly gated
+- [ ] Generalize replan/runtime behavior so non-Python plans have a coherent follow-up path
+- **Status:** pending
 
 ## Phases
 
@@ -81,6 +114,11 @@ Phase 2
 - That web-runtime cleanup is now implemented for the active onboarding -> roadmap -> lesson -> lesson-regeneration path: web plan creation, lesson reading, and lesson regeneration now use persisted structured contracts plus the real orchestrator instead of deterministic preview generators.
 - The final explicit legacy surface was the standalone web `/replan` page and `/api/plan/replan` route.
 - That last web replan slice is now migrated as well: `/replan` renders a real AI preview, `/api/plan/replan` applies the same orchestrator-backed replacement flow used by lesson regeneration, and the unused deterministic `buildReplanResult` path has been removed.
+- Phase 3 from the rebuild plan is now complete in code: `packages/domain-packs` exports `python`, `piano`, and `drawing`, each pack now carries richer lesson constraints plus critique rubrics, and Python keeps its `automation` overlay for tag-driven prompt biasing.
+- The multi-domain registry now normalizes numeric lesson ranges at the export boundary because JSON imports widen them to `number[]` during type-checking.
+- Phase 4 is now complete as well: onboarding goal mapping supports Python, piano, and drawing; plan generation routes into the matching domain pack; and the active web runtime can now persist and reload non-Python roadmaps without forcing a Python lesson.
+- The current boundary is intentional: multi-domain roadmap generation is live, but lesson generation and replanning still remain Python-only in the active product flow.
+- The next concrete implementation target is Phase 5: choose the next non-Python domain to carry through lesson generation and replanning, or formalize roadmap-only gating until that path is built.
 
 ---
 

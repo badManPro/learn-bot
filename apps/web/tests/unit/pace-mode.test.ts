@@ -11,7 +11,8 @@ test("builds a structured plan request from the persisted learner profile", () =
     currentLevel: "zero",
     weeklyTimeBudgetMinutes: 120,
     targetDeadline: new Date("2026-05-05T00:00:00.000Z"),
-    mbti: "INFP"
+    mbti: "INFP",
+    goalPath: "python_for_ai_workflows"
   });
 
   expect(request.targetDeadline).toBe("2026-05-05");

@@ -9,6 +9,8 @@ datasource db {
 
 enum GoalPath {
   python_for_ai_workflows
+  piano_foundations
+  drawing_foundations
 }
 
 enum CurrentLevel {

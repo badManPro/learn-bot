@@ -3,6 +3,7 @@
     "tasks are executable by a learner",
     "time estimates are realistic",
     "lesson has a concrete completion contract",
-    "prerequisites are respected"
+    "prerequisites are respected",
+    "the lesson ends in a visible Python or terminal outcome"
   ]
 }

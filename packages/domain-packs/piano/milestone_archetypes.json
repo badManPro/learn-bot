@@ -1,0 +1,17 @@
+[
+  {
+    "id": "keyboard-map-and-posture",
+    "label": "Keyboard Map and Posture",
+    "description": "Build reliable hand position, posture, and note-location awareness."
+  },
+  {
+    "id": "steady-rhythm-loop",
+    "label": "Steady Rhythm Loop",
+    "description": "Play short patterns in time with counting or a metronome."
+  },
+  {
+    "id": "first-complete-piece",
+    "label": "First Complete Piece",
+    "description": "Perform a short beginner piece or progression with stable tempo and clean transitions."
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "keyboard-orientation",
+    "label": "Keyboard Orientation",
+    "prerequisites": []
+  },
+  {
+    "id": "rhythm-and-counting",
+    "label": "Rhythm and Counting",
+    "prerequisites": ["keyboard-orientation"]
+  },
+  {
+    "id": "five-finger-technique",
+    "label": "Five-Finger Technique",
+    "prerequisites": ["keyboard-orientation", "rhythm-and-counting"]
+  },
+  {
+    "id": "basic-chord-shapes",
+    "label": "Basic Chord Shapes",
+    "prerequisites": ["five-finger-technique"]
+  }
+]

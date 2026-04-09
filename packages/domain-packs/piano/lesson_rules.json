@@ -1,0 +1,14 @@
+{
+  "defaultTaskCountRange": [2, 5],
+  "defaultTaskMinutesRange": [8, 18],
+  "acceptableLessonFormats": ["technique-drill", "guided-practice", "repertoire-application"],
+  "allowedTaskTypes": ["listen-and-clap", "hands-separate-drill", "tempo-ladder", "short-reflection"],
+  "mustInclude": ["demonstration-step", "slow-practice-step", "self-check-step"],
+  "forbiddenPatterns": ["full-song-at-performance-tempo", "new-concept-plus-new-piece-in-one-lesson", "pain-through-repetition"],
+  "equipmentOrEnvironment": ["Keyboard or piano", "Metronome", "Stable bench or seat"],
+  "pedagogyConstraints": [
+    "Introduce one primary technical focus per lesson.",
+    "Prefer slow repetition before speed.",
+    "Keep success criteria audible or visible to the learner."
+  ]
+}

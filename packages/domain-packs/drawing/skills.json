@@ -1,0 +1,22 @@
+[
+  {
+    "id": "line-control-and-shape",
+    "label": "Line Control and Shape",
+    "prerequisites": []
+  },
+  {
+    "id": "form-construction",
+    "label": "Form Construction",
+    "prerequisites": ["line-control-and-shape"]
+  },
+  {
+    "id": "light-and-value",
+    "label": "Light and Value",
+    "prerequisites": ["line-control-and-shape"]
+  },
+  {
+    "id": "subject-studies",
+    "label": "Subject Studies",
+    "prerequisites": ["form-construction", "light-and-value"]
+  }
+]

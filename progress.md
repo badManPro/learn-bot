@@ -292,6 +292,76 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 13: Domain-pack v1
+- **Status:** complete
+- Actions taken:
+  - Re-read the rebuild plan and confirmed the next unexecuted high-level step was Phase 3, `Domain-pack v1`, rather than another Python-only orchestrator slice.
+  - Expanded `packages/domain-packs` from a Python-only stub into a multi-domain registry that now exports `python`, `piano`, and `drawing`, plus `getDomainPack(...)` and `domainPackIds`.
+  - Deepened the Python base pack with subdomain tags, environment assumptions, richer lesson rules, and an expanded critique rubric so the pack shape matches the rebuild-plan contract more closely.
+  - Added complete base-pack JSON data for `piano` and `drawing`, including skill graphs, milestone archetypes, lesson rules, and critique rubrics.
+  - Added a focused `domain-packs` unit test that verifies base-domain coverage, skill-graph integrity, richer lesson-rule fields, and the preserved Python `automation` overlay.
+  - Fixed a Next type-check failure caused by JSON range imports widening to `number[]` by normalizing range fields into explicit two-number tuples at the `packages/domain-packs` export boundary.
+- Verification:
+  - `pnpm --filter @learn-bot/web test -- --run tests/unit/domain-packs.test.ts tests/unit/python-plan-orchestrator.test.ts tests/unit/python-lesson-orchestrator.test.ts tests/unit/python-replan-orchestrator.test.ts` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+- Files created/modified:
+  - `packages/domain-packs/src/index.ts` (updated)
+  - `packages/domain-packs/python/domain.json` (updated)
+  - `packages/domain-packs/python/lesson_rules.json` (updated)
+  - `packages/domain-packs/python/critique_rubric.json` (updated)
+  - `packages/domain-packs/piano/domain.json` (created)
+  - `packages/domain-packs/piano/skills.json` (created)
+  - `packages/domain-packs/piano/milestone_archetypes.json` (created)
+  - `packages/domain-packs/piano/lesson_rules.json` (created)
+  - `packages/domain-packs/piano/critique_rubric.json` (created)
+  - `packages/domain-packs/drawing/domain.json` (created)
+  - `packages/domain-packs/drawing/skills.json` (created)
+  - `packages/domain-packs/drawing/milestone_archetypes.json` (created)
+  - `packages/domain-packs/drawing/lesson_rules.json` (created)
+  - `packages/domain-packs/drawing/critique_rubric.json` (created)
+  - `apps/web/tests/unit/domain-packs.test.ts` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
+### Phase 14: Multi-domain Plan Generation
+- **Status:** complete
+- Actions taken:
+  - Extended onboarding domain support from one hardcoded Python path to three supported goal paths: Python, piano, and drawing.
+  - Added `apps/web/src/lib/ai/goal-paths.ts` so web onboarding/runtime can map between Prisma `GoalPath` values and shared domain-pack ids.
+  - Added `packages/ai-orchestrator/src/plan.ts`, which now infers or respects the requested domain, injects the selected pack's richer constraints into the roadmap prompt, and normalizes the returned roadmap onto that domain.
+  - Kept `packages/ai-orchestrator/src/python-plan.ts` as a compatibility wrapper so the Python-only lesson/replan modules could keep working while generic plan generation moved into the new entrypoint.
+  - Rewired web plan generation and desktop `plan.generate` onto the generic orchestrator path.
+  - Intentionally split web bootstrap behavior by domain: Python still creates an initial lesson, while piano and drawing now persist roadmap-only snapshots with `currentLessonId: null`.
+  - Added explicit desktop guards so lesson generation and replanning reject non-Python plans instead of running them through the Python orchestrator by mistake.
+  - Added focused tests for domain-aware goal mapping, runtime goal-path mapping, and generic plan orchestration.
+- Verification:
+  - `pnpm prisma:push` ✅
+  - `pnpm --filter @learn-bot/web test` ✅
+  - `pnpm lint:boundaries` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+- Files created/modified:
+  - `apps/web/prisma/schema.prisma` (updated)
+  - `apps/web/src/lib/ai/goal-paths.ts` (created)
+  - `apps/web/src/lib/ai/goal-mapper.ts` (updated)
+  - `apps/web/src/lib/ai/runtime.ts` (updated)
+  - `apps/web/src/lib/ai/plan-generator.ts` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `packages/ai-orchestrator/src/plan.ts` (created)
+  - `packages/ai-orchestrator/src/index.ts` (updated)
+  - `packages/ai-orchestrator/src/python-plan.ts` (updated)
+  - `packages/ai-orchestrator/src/python-lesson.ts` (updated)
+  - `packages/ai-orchestrator/src/python-replan.ts` (updated)
+  - `apps/web/tests/unit/goal-mapper.test.ts` (updated)
+  - `apps/web/tests/unit/pace-mode.test.ts` (updated)
+  - `apps/web/tests/unit/plan-orchestrator-domain.test.ts` (created)
+  - `apps/web/tests/unit/runtime-domain-routing.test.ts` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

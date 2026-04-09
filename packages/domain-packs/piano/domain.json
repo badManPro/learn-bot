@@ -1,0 +1,9 @@
+{
+  "id": "piano",
+  "label": "Piano",
+  "family": "music",
+  "defaultTags": ["piano", "beginner", "deliberate-practice"],
+  "subdomainTags": ["rhythm", "technique", "chords", "repertoire", "ear-training"],
+  "supportedModalities": ["listening", "playing", "counting", "reflection"],
+  "environmentAssumptions": ["Access to a keyboard or piano", "Metronome access", "A quiet practice window"]
+}

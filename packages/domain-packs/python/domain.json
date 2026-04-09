@@ -3,5 +3,7 @@
   "label": "Python",
   "family": "programming",
   "defaultTags": ["python", "beginner", "project-based"],
-  "supportedModalities": ["reading", "coding", "debugging", "reflection"]
+  "subdomainTags": ["automation", "cli", "scripting", "debugging", "ai-workflows"],
+  "supportedModalities": ["reading", "coding", "debugging", "reflection"],
+  "environmentAssumptions": ["Python 3 installed", "Terminal access", "A local editor for small scripts"]
 }

@@ -192,10 +192,10 @@ export default function App() {
         <section className="rounded-[1.75rem] border border-stone-800 bg-stone-900/70 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl space-y-2">
-              <h2 className="text-lg font-medium">Real Python plan generation</h2>
+              <h2 className="text-lg font-medium">Real domain-aware plan generation</h2>
               <p className="text-sm text-stone-300">
-                This button calls the Electron main process, which then invokes the OpenAI-backed Python plan
-                orchestrator with structured output validation.
+                This button calls the Electron main process, which now chooses the plan domain from the request and
+                builds the roadmap against the matching domain pack with structured output validation.
               </p>
               <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
                 <p>Goal: {DEFAULT_PLAN_REQUEST.goalText}</p>
@@ -210,7 +210,7 @@ export default function App() {
               onClick={() => void handleGeneratePlan()}
               type="button"
             >
-              {isGeneratingPlan ? "Generating..." : "Generate Python roadmap"}
+              {isGeneratingPlan ? "Generating..." : "Generate roadmap"}
             </button>
           </div>
 
@@ -268,6 +268,7 @@ export default function App() {
               </p>
               {planPreview ? (
                 <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
+                  <p>Domain: {planPreview.domainId}</p>
                   <p>Active milestone: {planPreview.milestones.find((item) => item.status === "active")?.title ?? "unknown"}</p>
                   <p>Lesson type: {planPreview.todayLessonSeed.lessonType}</p>
                   <p>Objective: {planPreview.todayLessonSeed.objective}</p>
@@ -282,7 +283,7 @@ export default function App() {
             <div className="flex flex-col gap-3">
               <button
                 className="rounded-full border border-sky-300 bg-sky-200 px-5 py-3 text-sm font-medium text-sky-950 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!planPreview || isGeneratingLesson}
+                disabled={!planPreview || planPreview.domainId !== "python" || isGeneratingLesson}
                 onClick={() => void handleGenerateLesson()}
                 type="button"
               >
@@ -290,7 +291,7 @@ export default function App() {
               </button>
               <button
                 className="rounded-full border border-cyan-300 bg-cyan-200 px-5 py-3 text-sm font-medium text-cyan-950 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!lessonPreview || isGeneratingLesson}
+                disabled={!lessonPreview || planPreview?.domainId !== "python" || isGeneratingLesson}
                 onClick={() => void handleGenerateFollowUpLesson()}
                 type="button"
               >
@@ -298,6 +299,13 @@ export default function App() {
               </button>
             </div>
           </div>
+
+          {planPreview && planPreview.domainId !== "python" ? (
+            <div className="mt-4 rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
+              Lesson and replan generation are still Python-only in the desktop shell. This Phase 4 slice only
+              generalizes roadmap generation.
+            </div>
+          ) : null}
 
           {lessonError ? (
             <div className="mt-4 rounded-2xl border border-amber-700/60 bg-amber-950/30 p-4 text-sm text-amber-100">
@@ -369,7 +377,7 @@ export default function App() {
               <div className="flex flex-wrap gap-3">
                 <button
                   className="rounded-full border border-stone-700 px-4 py-2 text-sm text-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!lessonPreview || isGeneratingReplan}
+                  disabled={!lessonPreview || planPreview?.domainId !== "python" || isGeneratingReplan}
                   onClick={() => void handleReplan("too_hard")}
                   type="button"
                 >
@@ -377,7 +385,7 @@ export default function App() {
                 </button>
                 <button
                   className="rounded-full border border-stone-700 px-4 py-2 text-sm text-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!lessonPreview || isGeneratingReplan}
+                  disabled={!lessonPreview || planPreview?.domainId !== "python" || isGeneratingReplan}
                   onClick={() => void handleReplan("pace_too_fast")}
                   type="button"
                 >
@@ -385,7 +393,7 @@ export default function App() {
                 </button>
                 <button
                   className="rounded-full border border-stone-700 px-4 py-2 text-sm text-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!lessonPreview || isGeneratingReplan}
+                  disabled={!lessonPreview || planPreview?.domainId !== "python" || isGeneratingReplan}
                   onClick={() => void handleReplan("inactive")}
                   type="button"
                 >

@@ -7,8 +7,15 @@ test("maps python and AI goals to the supported path", async () => {
   expect(result.mappedPath).toBe("python_for_ai_workflows");
 });
 
-test("rejects non-programming goals", async () => {
+test("maps piano goals to the supported path", async () => {
   const result = await mapGoal("我想学钢琴");
+
+  expect(result.supportStatus).toBe("supported");
+  expect(result.mappedPath).toBe("piano_foundations");
+});
+
+test("rejects goals outside the supported domain packs", async () => {
+  const result = await mapGoal("我想学法语");
 
   expect(result.supportStatus).toBe("unsupported");
 });

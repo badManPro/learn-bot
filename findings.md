@@ -119,6 +119,15 @@
 - `/lesson/[lessonId]` now loads persisted lesson, task, and quiz data from Prisma, and shows regeneration state when `regenerationCount > 0`.
 - The lesson regeneration trigger now uses a server-handled HTML form POST instead of a client-only click handler; the client path proved hydration-dependent and could miss the request under E2E timing.
 - `vitest.config.ts` now scopes test collection to `tests/unit/**` and excludes `tests/e2e/**`, preventing Vitest from pulling in Playwright specs and dependency test files.
+- Phase 3 of the rebuild plan was still missing in the repo even after Python AI orchestration landed: `packages/domain-packs` only contained Python, so the codebase had no concrete base packs for `piano` or `drawing`.
+- `packages/domain-packs` now exports a real multi-domain registry with `python`, `piano`, and `drawing`, plus `getDomainPack(...)` and `domainPackIds` helpers for future domain routing work.
+- The domain-pack data model is now less shallow: each base pack carries subdomain tags, environment assumptions, richer lesson rules, and critique checks instead of only a minimal label-and-rules stub.
+- JSON imports widen range fields like `defaultTaskCountRange` to `number[]` under Next type-checking; the registry now normalizes those fields back into explicit two-number tuples at the package boundary.
+- The Python pack still keeps its `automation` overlay, which means Phase 4 can route into a base domain first and then bias the prompt using tags or overlays without inventing another pack family.
+- Phase 4 plan generation is now implemented across the active runtime: onboarding accepts `python_for_ai_workflows`, `piano_foundations`, and `drawing_foundations`, and the plan orchestrator now chooses the matching domain pack instead of assuming Python.
+- `packages/ai-orchestrator/src/plan.ts` now carries the generic plan entrypoint: it infers or respects the requested domain, injects richer domain-pack constraints into the system prompt, and normalizes the resulting roadmap back onto the chosen pack.
+- Web roadmap bootstrap now has a deliberate split by domain: Python still creates an initial lesson immediately, while piano and drawing currently persist the structured roadmap and milestone state without inventing a half-finished lesson generator.
+- The desktop shell now reflects the same boundary: `plan.generate` is domain-aware, while lesson/replan actions explicitly reject non-Python plans instead of silently running them through the Python prompts.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -158,6 +167,8 @@
 | The first lesson regeneration button path was hydration-dependent | Replaced the client fetch button with a plain form POST to the existing regeneration route |
 | Vitest started collecting E2E files and dependency test suites | Added explicit `include`/`exclude` patterns in `vitest.config.ts` |
 | Electron desktop dev crashed on workspace package ESM resolution | Stopped externalizing `@learn-bot/*` packages in `apps/desktop/electron.vite.config.ts` so Electron dev bundles those sources instead of handing raw TS modules to Node |
+| Domain-pack numeric ranges widened from tuples to `number[]` during Next build | Normalized the imported JSON ranges inside `packages/domain-packs/src/index.ts` before exporting typed packs |
+| Generic plan orchestration created duplicate star exports through `packages/ai-orchestrator/src/index.ts` | Moved lesson/replan shared imports onto `plan.ts` directly and kept `python-plan.ts` as wrapper-only compatibility exports |
 | Expanding shared plan contracts broke existing persisted roadmap records | Added `enrichMilestones()` in the web plan generator so DB milestones are upgraded into the richer shared roadmap shape at read time |
 | Zod defaults widened orchestrator types during Next type-checking | Re-parsed the model output through `PlanSchema.parse()` inside `generatePythonPlan()` before normalization |
 

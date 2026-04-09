@@ -1,9 +1,10 @@
-const SUPPORTED_GOAL_PATTERN =
-  /python|ai|llm|agent|chatbot|automation|workflow|script|自动化|工作流|ai 应用/i;
+import { inferGoalDomain } from "@learn-bot/ai-orchestrator";
+
+import { domainPackIdToGoalPath, type SupportedGoalPath } from "./goal-paths";
 
 export type GoalMappingResult = {
   supportStatus: "supported" | "unsupported";
-  mappedPath: "python_for_ai_workflows" | null;
+  mappedPath: SupportedGoalPath | null;
   normalizedGoal: string | null;
   unsupportedReason: string | null;
 };
@@ -11,7 +12,9 @@ export type GoalMappingResult = {
 export async function mapGoal(rawGoal: string): Promise<GoalMappingResult> {
   const normalized = rawGoal.trim();
 
-  if (!SUPPORTED_GOAL_PATTERN.test(normalized)) {
+  const inferredDomain = inferGoalDomain(normalized);
+
+  if (!inferredDomain) {
     return {
       supportStatus: "unsupported",
       mappedPath: null,
@@ -22,7 +25,7 @@ export async function mapGoal(rawGoal: string): Promise<GoalMappingResult> {
 
   return {
     supportStatus: "supported",
-    mappedPath: "python_for_ai_workflows",
+    mappedPath: domainPackIdToGoalPath(inferredDomain),
     normalizedGoal: normalized,
     unsupportedReason: null
   };

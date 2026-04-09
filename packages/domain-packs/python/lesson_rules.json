@@ -1,6 +1,14 @@
 {
   "defaultTaskCountRange": [2, 6],
   "defaultTaskMinutesRange": [10, 20],
+  "acceptableLessonFormats": ["guided-build", "debug-lab", "practice-loop"],
+  "allowedTaskTypes": ["read-example", "write-code", "run-code", "verify-output", "reflect"],
   "mustInclude": ["execution-step", "verification-step"],
-  "forbiddenPatterns": ["skip validation", "multi-hour single task"]
+  "forbiddenPatterns": ["skip validation", "multi-hour single task"],
+  "equipmentOrEnvironment": ["Python 3", "Terminal", "Text editor"],
+  "pedagogyConstraints": [
+    "Prefer runnable tasks over theory-only reading.",
+    "Keep one primary concept per lesson.",
+    "End with observable output or verification."
+  ]
 }

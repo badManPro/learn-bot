@@ -1,12 +1,10 @@
-import type { GoalPath, LearningProfile } from "@prisma/client";
+import type { LearningProfile } from "@prisma/client";
 import { LessonSchema, PlanSchema, type LessonContract, type PlanContract } from "@learn-bot/ai-contracts";
 import { createOpenAIStructuredModel, type PlanGenerationRequest } from "@learn-bot/ai-orchestrator";
 
 import { env } from "@/lib/env";
-
-export function isSupportedGoalPath(goalPath: GoalPath | null | undefined): goalPath is "python_for_ai_workflows" {
-  return goalPath === "python_for_ai_workflows";
-}
+import { goalPathToDomainPackId, isSupportedGoalPath } from "./goal-paths";
+export { goalPathToDomainPackId, isSupportedGoalPath } from "./goal-paths";
 
 export function requireOpenAIApiKey() {
   if (!env.OPENAI_API_KEY) {
@@ -33,14 +31,15 @@ export function resolveReplanModel() {
 }
 
 export function buildPlanGenerationRequest(
-  profile: Pick<LearningProfile, "goalText" | "currentLevel" | "weeklyTimeBudgetMinutes" | "targetDeadline" | "mbti">
+  profile: Pick<LearningProfile, "goalText" | "currentLevel" | "weeklyTimeBudgetMinutes" | "targetDeadline" | "mbti" | "goalPath">
 ): PlanGenerationRequest {
   return {
     goalText: profile.goalText,
     currentLevel: profile.currentLevel,
     weeklyTimeBudgetMinutes: profile.weeklyTimeBudgetMinutes,
     targetDeadline: profile.targetDeadline.toISOString().slice(0, 10),
-    mbti: profile.mbti
+    mbti: profile.mbti,
+    preferredDomain: isSupportedGoalPath(profile.goalPath) ? goalPathToDomainPackId(profile.goalPath) : null
   };
 }
 

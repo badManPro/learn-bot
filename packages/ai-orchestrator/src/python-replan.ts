@@ -12,7 +12,7 @@ import { domainPacks } from "@learn-bot/domain-packs";
 import { z } from "zod";
 
 import type { StructuredTextModel } from "./openai-client";
-import { buildLearnerStateSummary, PlanGenerationRequestSchema } from "./python-plan";
+import { buildLearnerStateSummary, PlanGenerationRequestSchema } from "./plan";
 
 export const ReplanGenerationRequestSchema = PlanGenerationRequestSchema.extend({
   plan: PlanSchema,

@@ -1,8 +1,8 @@
 import type { LessonContract, PlanContract, ReplanContract } from "@learn-bot/ai-contracts";
 import {
   createOpenAIStructuredModel,
+  generatePlan,
   generatePythonLesson,
-  generatePythonPlan,
   generatePythonReplan,
   type LessonGenerationRequest,
   type PlanGenerationRequest,
@@ -36,7 +36,7 @@ function createStructuredClient() {
 }
 
 export async function generateDesktopPlan(input: PlanGenerationRequest): Promise<PlanContract> {
-  return generatePythonPlan({
+  return generatePlan({
     client: createStructuredClient(),
     input,
     model: resolvePlanModel()
@@ -44,6 +44,10 @@ export async function generateDesktopPlan(input: PlanGenerationRequest): Promise
 }
 
 export async function generateDesktopLesson(input: LessonGenerationRequest): Promise<LessonContract> {
+  if (input.plan.domainId !== "python") {
+    throw new Error(`Lesson generation is currently implemented only for Python plans. Received domain: ${input.plan.domainId}.`);
+  }
+
   return generatePythonLesson({
     client: createStructuredClient(),
     input,
@@ -52,6 +56,10 @@ export async function generateDesktopLesson(input: LessonGenerationRequest): Pro
 }
 
 export async function generateDesktopReplan(input: ReplanGenerationRequest): Promise<ReplanContract> {
+  if (input.plan.domainId !== "python") {
+    throw new Error(`Replanning is currently implemented only for Python plans. Received domain: ${input.plan.domainId}.`);
+  }
+
   return generatePythonReplan({
     client: createStructuredClient(),
     input,

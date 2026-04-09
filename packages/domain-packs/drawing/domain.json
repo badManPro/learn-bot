@@ -1,0 +1,9 @@
+{
+  "id": "drawing",
+  "label": "Drawing",
+  "family": "visual-art",
+  "defaultTags": ["drawing", "beginner", "observation-based"],
+  "subdomainTags": ["line-control", "shape", "perspective", "value", "composition"],
+  "supportedModalities": ["observing", "drawing", "reviewing", "reflection"],
+  "environmentAssumptions": ["Paper and pen or pencil, or a drawing tablet", "Reference images or simple real objects", "Adequate lighting"]
+}
