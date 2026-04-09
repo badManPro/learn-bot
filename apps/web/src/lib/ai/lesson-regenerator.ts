@@ -17,7 +17,6 @@ import {
 type RegenerateLessonInput = {
   lessonId: string;
   reason: ReplanReason;
-  regenerationCount: number;
 };
 
 export type RegenerateLessonResult = {

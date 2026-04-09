@@ -4,11 +4,10 @@ import { QuizCard, RegenerationBanner, TaskCard } from "@learn-bot/ui";
 type LessonShellProps = {
   lesson: LessonPayload;
   lessonId?: string;
-  regenerationCount?: number;
   regenerationMessage?: string | null;
 };
 
-export function LessonShell({ lesson, lessonId, regenerationCount = 0, regenerationMessage }: LessonShellProps) {
+export function LessonShell({ lesson, lessonId, regenerationMessage }: LessonShellProps) {
   const [firstTask, ...remainingTasks] = lesson.tasks;
 
   return (
@@ -36,7 +35,6 @@ export function LessonShell({ lesson, lessonId, regenerationCount = 0, regenerat
           <form action="/api/lesson/regenerate" className="space-y-3" method="post">
             <input name="lessonId" type="hidden" value={lessonId} />
             <input name="reason" type="hidden" value="too_hard" />
-            <input name="regenerationCount" type="hidden" value={String(regenerationCount)} />
             <button
               className="rounded-full border border-amber-300 bg-amber-100 px-5 py-3 text-sm font-medium text-amber-950 transition hover:bg-amber-200"
               type="submit"

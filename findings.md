@@ -56,6 +56,9 @@
 - `apps/web/src/lib/ai/lesson-regenerator.ts` now routes “too hard” recovery through `generatePythonReplan` plus `generatePythonLesson(replacement)`, updates the stored plan seed, and persists the replacement lesson contract back onto the same lesson record.
 - The old `apps/web/src/lib/ai/lesson-generator.ts` preview module has been removed from the active codepath entirely; tests that previously depended on implicit preview fallbacks now mock real plan/lesson snapshots or validate against shared schemas directly.
 - Residual legacy note: the standalone web `/replan` page and `/api/plan/replan` route still use the older deterministic compatibility helper. They are no longer the primary recovery path, but they remain as the last explicit legacy slice.
+- The clean final removal step is to make those two web replan surfaces consume the same real replan runtime already used by lesson regeneration, not to invent a third separate compatibility layer.
+- That final removal step is now done. `apps/web/src/lib/ai/replan-runtime.ts` loads the active structured plan and lesson context for the web runtime, `/replan` renders a real AI replan preview from that context, and `/api/plan/replan` now applies replans by delegating to the shared lesson-regeneration path instead of computing a deterministic compatibility result.
+- `apps/web/src/lib/domain/replan.ts` is back to a narrow responsibility: it now only derives `paceMode`, and the old deterministic `buildReplanResult` compatibility helper has been deleted from the active codebase.
 
 ## Requirements
 - Build the AI Learning Assistant MVP from the provided docs, progressing task-by-task through the implementation plan.

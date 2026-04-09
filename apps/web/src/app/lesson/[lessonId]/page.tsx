@@ -43,7 +43,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
       key={lessonId}
       lesson={lesson}
       lessonId={lessonId}
-      regenerationCount={lessonRecord.regenerationCount}
       regenerationMessage={lessonRecord.regenerationCount > 0 ? REGENERATION_MESSAGE : null}
     />
   );

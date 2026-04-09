@@ -9,13 +9,7 @@ const REGENERATION_REASONS = new Set<ReplanReason>(["too_hard", "pace_too_fast",
 function parsePayload(payload: Record<string, unknown>) {
   return {
     lessonId: typeof payload.lessonId === "string" ? payload.lessonId : "",
-    reason: typeof payload.reason === "string" ? payload.reason : "",
-    regenerationCount:
-      typeof payload.regenerationCount === "number"
-        ? payload.regenerationCount
-        : typeof payload.regenerationCount === "string"
-          ? Number.parseInt(payload.regenerationCount, 10) || 0
-          : 0
+    reason: typeof payload.reason === "string" ? payload.reason : ""
   };
 }
 
@@ -25,7 +19,7 @@ export async function POST(request: Request) {
   const payload = expectsJson
     ? ((await request.json()) as Record<string, unknown>)
     : Object.fromEntries(await request.formData());
-  const { lessonId, reason, regenerationCount } = parsePayload(payload);
+  const { lessonId, reason } = parsePayload(payload);
 
   if (!lessonId || !REGENERATION_REASONS.has(reason as ReplanReason)) {
     return NextResponse.json(
@@ -40,8 +34,7 @@ export async function POST(request: Request) {
   try {
     const result = await regenerateLesson({
       lessonId,
-      reason: reason as ReplanReason,
-      regenerationCount
+      reason: reason as ReplanReason
     });
 
     if (!result) {

@@ -265,6 +265,33 @@
   - `findings.md` (updated)
   - `progress.md` (updated)
 
+### Phase 12: Final Web Replan Cleanup
+- **Status:** complete
+- Actions taken:
+  - Replaced the standalone web `/replan` page with a real AI preview that loads the active structured roadmap, active lesson, and recent lesson history from Prisma before calling the shared Python replan orchestrator.
+  - Added `apps/web/src/lib/ai/replan-runtime.ts` so web replan preview and apply flows share one loader for stored contracts and one orchestrator-backed preview path.
+  - Rebuilt `/api/plan/replan` to validate the replan reason, load the current active lesson from the real runtime context, and delegate the actual replacement work to `regenerateLesson(...)`.
+  - Removed the old deterministic `buildReplanResult` compatibility path and trimmed `apps/web/src/lib/domain/replan.ts` back down to pace derivation only.
+  - Updated the replan unit test to assert the new real-preview UI instead of the removed deterministic mode-card copy.
+- Verification:
+  - `pnpm --filter @learn-bot/web test -- --run tests/unit/replan.test.ts tests/unit/lesson-regenerator.test.ts tests/unit/roadmap-page.test.tsx tests/unit/lesson-page.test.tsx tests/unit/pace-mode.test.ts tests/unit/python-replan-orchestrator.test.ts` ✅
+  - `pnpm --filter @learn-bot/web build` ✅
+  - `pnpm lint:boundaries` ✅
+- Files created/modified:
+  - `apps/web/src/lib/ai/replan-runtime.ts` (created)
+  - `apps/web/src/app/replan/page.tsx` (updated)
+  - `apps/web/src/app/api/plan/replan/route.ts` (updated)
+  - `apps/web/src/lib/domain/replan.ts` (updated)
+  - `apps/web/src/lib/ai/lesson-regenerator.ts` (updated)
+  - `apps/web/src/app/api/lesson/regenerate/route.ts` (updated)
+  - `apps/web/src/app/lesson/[lessonId]/page.tsx` (updated)
+  - `apps/web/src/components/lesson/lesson-shell.tsx` (updated)
+  - `apps/web/tests/unit/replan.test.ts` (updated)
+  - `apps/web/tests/unit/lesson-regenerator.test.ts` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-07
 
 ### Phase 1: Requirements & Discovery

@@ -261,8 +261,7 @@ beforeEach(() => {
 test("replaces the lesson through real replan and replacement generation", async () => {
   const result = await regenerateLesson({
     lessonId: "lesson_1",
-    reason: "too_hard",
-    regenerationCount: 0
+    reason: "too_hard"
   });
 
   expect(result).not.toBeNull();
