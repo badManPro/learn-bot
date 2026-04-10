@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { LessonContract, PlanContract, ReplanContract, ReplanReason, TodayLessonSeed } from "@learn-bot/ai-contracts";
 import type { LessonGenerationRequest, PlanGenerationRequest, ReplanGenerationRequest } from "@learn-bot/ai-orchestrator";
 
-import type { DesktopSession } from "../../shared/contracts";
+import type { DesktopSession, DesktopSessionStatus } from "../../shared/contracts";
 
 const DEFAULT_PLAN_REQUEST: PlanGenerationRequest = {
   goalText: "我想学 Python 做 AI 自动化工作流",
@@ -14,11 +14,53 @@ const DEFAULT_PLAN_REQUEST: PlanGenerationRequest = {
 };
 
 function formatDomainLabel(domainId: string) {
-  return domainId.slice(0, 1).toUpperCase() + domainId.slice(1);
+  const labels: Record<string, string> = {
+    drawing: "Drawing",
+    piano: "Piano",
+    python: "Python"
+  };
+
+  return labels[domainId] ?? domainId.slice(0, 1).toUpperCase() + domainId.slice(1);
+}
+
+function formatSessionStatus(status: DesktopSessionStatus | "loading") {
+  switch (status) {
+    case "authenticated":
+      return "已连接";
+    case "pending":
+      return "等待浏览器完成";
+    case "anonymous":
+      return "未登录";
+    default:
+      return "读取中";
+  }
 }
 
 function supportsInteractiveDomain(domainId: string) {
   return domainId === "python" || domainId === "piano";
+}
+
+function normalizeRuntimeError(message: string) {
+  const compactMessage = message.replace(/^Error invoking remote method '[^']+': Error:\s*/u, "");
+
+  if (compactMessage.includes("OPENAI_API_KEY is not set")) {
+    return "未设置 OPENAI_API_KEY。当前构建已经打通桌面 IPC 和编排链路，但还不能真正请求模型。";
+  }
+
+  return compactMessage;
+}
+
+function statusTone(status: DesktopSessionStatus | "loading") {
+  switch (status) {
+    case "authenticated":
+      return "status-pill status-pill--authenticated";
+    case "pending":
+      return "status-pill status-pill--pending";
+    case "anonymous":
+      return "status-pill status-pill--anonymous";
+    default:
+      return "status-pill status-pill--loading";
+  }
 }
 
 export default function App() {
@@ -29,9 +71,11 @@ export default function App() {
   const [lessonHistory, setLessonHistory] = useState<LessonContract[]>([]);
   const [replanPreview, setReplanPreview] = useState<ReplanContract | null>(null);
   const [bridgeError, setBridgeError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
   const [lessonError, setLessonError] = useState<string | null>(null);
   const [replanError, setReplanError] = useState<string | null>(null);
+  const [isOpeningLogin, setIsOpeningLogin] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [isGeneratingLesson, setIsGeneratingLesson] = useState(false);
   const [isGeneratingReplan, setIsGeneratingReplan] = useState(false);
@@ -54,7 +98,7 @@ export default function App() {
       .catch((error) => {
         if (!disposed) {
           const message = error instanceof Error ? error.message : "Failed to read desktop session.";
-          setBridgeError(message);
+          setBridgeError(normalizeRuntimeError(message));
         }
       });
 
@@ -94,6 +138,21 @@ export default function App() {
     };
   }
 
+  async function handleLogin() {
+    setIsOpeningLogin(true);
+    setAuthError(null);
+
+    try {
+      const nextSession = await window.desktopApi.auth.login();
+      setSession(nextSession);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to open browser sign-in.";
+      setAuthError(normalizeRuntimeError(message));
+    } finally {
+      setIsOpeningLogin(false);
+    }
+  }
+
   async function handleGeneratePlan() {
     setIsGeneratingPlan(true);
     setPlanError(null);
@@ -108,7 +167,7 @@ export default function App() {
       setReplanError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Plan generation failed.";
-      setPlanError(message);
+      setPlanError(normalizeRuntimeError(message));
       setPlanPreview(null);
     } finally {
       setIsGeneratingPlan(false);
@@ -139,7 +198,7 @@ export default function App() {
       setReplanPreview(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Lesson generation failed.";
-      setLessonError(message);
+      setLessonError(normalizeRuntimeError(message));
       setLessonPreview(null);
     } finally {
       setIsGeneratingLesson(false);
@@ -154,7 +213,7 @@ export default function App() {
     await handleGenerateLesson({
       generationMode: "follow_up",
       lessonSeed: buildFollowUpLessonSeed(planPreview, lessonPreview),
-      lessonHistory: lessonPreview ? [...lessonHistory, lessonPreview].slice(-3) : lessonHistory
+      lessonHistory: [...lessonHistory, lessonPreview].slice(-3)
     });
   }
 
@@ -171,317 +230,434 @@ export default function App() {
       setReplanPreview(nextReplan);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Replan failed.";
-      setReplanError(message);
+      setReplanError(normalizeRuntimeError(message));
       setReplanPreview(null);
     } finally {
       setIsGeneratingReplan(false);
     }
   }
 
+  const sessionState = session?.status ?? "loading";
+  const activeMilestone = planPreview?.milestones.find((item) => item.status === "active") ?? null;
+  const planSupportsInteractiveLesson = Boolean(planPreview && supportsInteractiveDomain(planPreview.domainId));
+  const canGenerateFollowUpLesson = Boolean(lessonPreview && planSupportsInteractiveLesson);
+  const canRunReplan = Boolean(lessonPreview && planSupportsInteractiveLesson);
+
   return (
-    <main className="min-h-screen bg-stone-950 px-8 py-10 text-stone-100">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <header className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.3em] text-stone-400">Learn Bot Desktop</p>
-          <h1 className="text-4xl font-semibold">Phase 2 orchestration slice</h1>
-          <p className="max-w-3xl text-sm leading-6 text-stone-300">
-            The desktop shell now keeps a typed preload bridge and runs both roadmap and lesson generation through the
-            Electron main process with structured output validation.
-          </p>
-        </header>
+    <main className="app-shell">
+      <div className="app-shell__glow app-shell__glow--violet" />
+      <div className="app-shell__glow app-shell__glow--amber" />
+
+      <div className="app-layout">
+        <section className="hero-panel">
+          <div className="hero-panel__copy">
+            <p className="eyebrow">Learn Bot Desktop</p>
+            <h1>让桌面学习面板看起来像产品，而不是日志窗口。</h1>
+            <p className="hero-panel__text">
+              当前桌面端聚焦三件事：浏览器登录入口、学习路线图生成，以及基于当前里程碑的课程与恢复路径生成。
+            </p>
+          </div>
+
+          <div className="hero-panel__metrics">
+            <div className="mini-metric">
+              <span>当前目标</span>
+              <strong>{DEFAULT_PLAN_REQUEST.goalText}</strong>
+            </div>
+            <div className="mini-metric">
+              <span>每周投入</span>
+              <strong>{DEFAULT_PLAN_REQUEST.weeklyTimeBudgetMinutes} 分钟</strong>
+            </div>
+            <div className="mini-metric">
+              <span>桌面桥接</span>
+              <strong>{bridgeError ? "异常" : "在线"}</strong>
+            </div>
+          </div>
+        </section>
 
         {bridgeError ? (
-          <section className="rounded-[1.75rem] border border-rose-700/60 bg-rose-950/30 p-6 text-sm text-rose-100">
-            <p className="font-medium">Desktop bridge error</p>
-            <p className="mt-2 leading-6">{bridgeError}</p>
+          <section className="error-banner" role="alert">
+            <p className="error-banner__title">桌面桥接异常</p>
+            <p>{bridgeError}</p>
           </section>
         ) : null}
 
-        <section className="rounded-[1.75rem] border border-stone-800 bg-stone-900/70 p-6">
-          <div className="flex items-center justify-between gap-6">
-            <div className="space-y-2">
-              <h2 className="text-lg font-medium">Auth boundary</h2>
-              <p className="text-sm text-stone-300">
-                Status: <span className="font-medium text-white">{session?.status ?? "loading"}</span>
-              </p>
-              <p className="text-sm text-stone-300">
-                Workspace: <span className="font-medium text-white">{session?.workspaceId ?? "not selected"}</span>
-              </p>
-              <p className="text-sm text-stone-400">{session?.loginHint ?? "Loading desktop session..."}</p>
-            </div>
-            <button
-              className="rounded-full border border-stone-700 bg-stone-100 px-5 py-3 text-sm font-medium text-stone-950"
-              onClick={() => void window.desktopApi.auth.login().then((value) => setSession(value))}
-              type="button"
-            >
-              Login with ChatGPT
-            </button>
-          </div>
-        </section>
+        {authError ? (
+          <section className="error-banner" role="alert">
+            <p className="error-banner__title">无法打开登录页</p>
+            <p>{authError}</p>
+          </section>
+        ) : null}
 
-        <section className="rounded-[1.75rem] border border-stone-800 bg-stone-900/70 p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl space-y-2">
-              <h2 className="text-lg font-medium">Real domain-aware plan generation</h2>
-              <p className="text-sm text-stone-300">
-                This button calls the Electron main process, which now chooses the plan domain from the request and
-                builds the roadmap against the matching domain pack with structured output validation.
-              </p>
-              <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
-                <p>Goal: {DEFAULT_PLAN_REQUEST.goalText}</p>
-                <p>Current level: {DEFAULT_PLAN_REQUEST.currentLevel}</p>
-                <p>Weekly budget: {DEFAULT_PLAN_REQUEST.weeklyTimeBudgetMinutes} minutes</p>
-                <p>Deadline: {DEFAULT_PLAN_REQUEST.targetDeadline}</p>
+        <section className="panel-grid">
+          <article className="panel">
+            <div className="panel__header">
+              <div>
+                <p className="panel__eyebrow">Access</p>
+                <h2>OpenAI / ChatGPT 登录</h2>
+              </div>
+              <span className={statusTone(sessionState)}>{formatSessionStatus(sessionState)}</span>
+            </div>
+
+            <div className="info-stack">
+              <div className="info-row">
+                <span className="info-row__label">本地会话</span>
+                <strong className="info-row__value">{session?.accountLabel ?? "尚未建立桌面会话"}</strong>
+              </div>
+              <div className="info-row">
+                <span className="info-row__label">Workspace</span>
+                <strong className="info-row__value">{session?.workspaceId ?? "回调完成后再写入"}</strong>
+              </div>
+              <div className="info-note">
+                {session?.loginHint ?? "点击按钮后会在系统浏览器中发起 OpenAI 授权，并等待 localhost 回调完成。"}
               </div>
             </div>
-            <button
-              className="rounded-full border border-emerald-300 bg-emerald-200 px-5 py-3 text-sm font-medium text-emerald-950 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isGeneratingPlan}
-              onClick={() => void handleGeneratePlan()}
-              type="button"
-            >
-              {isGeneratingPlan ? "Generating..." : "Generate roadmap"}
-            </button>
-          </div>
 
-          {planError ? (
-            <div className="mt-4 rounded-2xl border border-amber-700/60 bg-amber-950/30 p-4 text-sm text-amber-100">
-              {planError}
+            <div className="panel__actions">
+              <button className="button button--primary" disabled={isOpeningLogin} onClick={() => void handleLogin()} type="button">
+                {isOpeningLogin ? "正在打开浏览器..." : "启动 OpenAI OAuth 登录"}
+              </button>
+              <p className="fine-print">
+                桌面端会优先复用本机 Codex 登录状态；没有可用会话时，才会从 `https://auth.openai.com/authorize`
+                发起带 `client_id`、`redirect_uri`、`state` 与 PKCE 的真实 OAuth 请求。
+              </p>
             </div>
-          ) : null}
+          </article>
 
-          {planPreview ? (
-            <article className="mt-6 rounded-3xl border border-stone-800 bg-stone-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Plan.generate</p>
-              <h3 className="mt-3 text-2xl font-semibold text-white">{planPreview.planTitle}</h3>
-              <p className="mt-3 text-sm leading-6 text-stone-300">{planPreview.goalSummary}</p>
-              <p className="mt-2 text-sm text-stone-400">Estimated timeline: {planPreview.totalEstimatedWeeks} weeks</p>
-              <ul className="mt-4 flex flex-wrap gap-2 text-xs text-stone-200">
-                {planPreview.tags.map((tag) => (
-                  <li className="rounded-full border border-stone-700 px-3 py-2" key={tag}>
-                    {tag}
-                  </li>
-                ))}
-              </ul>
-              <ol className="mt-5 space-y-3 text-sm text-stone-200">
-                {planPreview.milestones.map((milestone) => (
-                  <li className="rounded-2xl border border-stone-800 p-4" key={milestone.id}>
-                    <p className="font-medium text-white">
-                      {milestone.index}. {milestone.title}
-                    </p>
-                    <p className="mt-1 text-stone-400">{milestone.purpose}</p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.2em] text-stone-500">{milestone.status}</p>
-                    <p className="mt-3 text-xs text-stone-500">
-                      Success criteria: {milestone.successCriteria.join(" / ")}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-              <ul className="mt-4 flex flex-wrap gap-3 text-sm text-stone-200">
-                {planPreview.warnings.map((warning) => (
-                  <li className="rounded-full border border-amber-700/60 px-3 py-2 text-amber-200" key={warning}>
-                    {warning}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ) : null}
+          <article className="panel">
+            <div className="panel__header">
+              <div>
+                <p className="panel__eyebrow">Plan Setup</p>
+                <h2>本次生成配置</h2>
+              </div>
+              <button
+                className="button button--accent"
+                disabled={isGeneratingPlan}
+                onClick={() => void handleGeneratePlan()}
+                type="button"
+              >
+                {isGeneratingPlan ? "生成中..." : "生成学习路线图"}
+              </button>
+            </div>
+
+            <div className="summary-card">
+              <div className="summary-card__item">
+                <span>学习目标</span>
+                <strong>{DEFAULT_PLAN_REQUEST.goalText}</strong>
+              </div>
+              <div className="summary-card__item">
+                <span>起点水平</span>
+                <strong>{DEFAULT_PLAN_REQUEST.currentLevel}</strong>
+              </div>
+              <div className="summary-card__item">
+                <span>每周预算</span>
+                <strong>{DEFAULT_PLAN_REQUEST.weeklyTimeBudgetMinutes} 分钟</strong>
+              </div>
+              <div className="summary-card__item">
+                <span>目标日期</span>
+                <strong>{DEFAULT_PLAN_REQUEST.targetDeadline}</strong>
+              </div>
+            </div>
+
+            {planError ? (
+              <div className="inline-alert" role="alert">
+                {planError}
+              </div>
+            ) : (
+              <p className="fine-print">计划生成已走 Electron main process + 结构化输出校验，缺的是模型密钥和正式认证闭环，不是按钮本身。</p>
+            )}
+          </article>
         </section>
 
-        <section className="rounded-[1.75rem] border border-stone-800 bg-stone-900/70 p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl space-y-2">
-              <h2 className="text-lg font-medium">Real domain lesson generation</h2>
-              <p className="text-sm text-stone-300">
-                This path now uses the latest generated roadmap, the active milestone, and the learner profile to
-                request a real structured lesson from the main-process orchestrator.
-              </p>
+        <section className="workspace-grid">
+          <article className="panel panel--stretch">
+            <div className="panel__header">
+              <div>
+                <p className="panel__eyebrow">Plan.generate</p>
+                <h2>路线图预览</h2>
+              </div>
               {planPreview ? (
-                <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
-                  <p>Domain: {planPreview.domainId}</p>
-                  <p>Active milestone: {planPreview.milestones.find((item) => item.status === "active")?.title ?? "unknown"}</p>
-                  <p>Lesson type: {planPreview.todayLessonSeed.lessonType}</p>
-                  <p>Objective: {planPreview.todayLessonSeed.objective}</p>
-                  <p>History count: {lessonHistory.length}</p>
+                <div className="meta-chip-group">
+                  <span className="meta-chip">{formatDomainLabel(planPreview.domainId)}</span>
+                  <span className="meta-chip">{planPreview.totalEstimatedWeeks} 周</span>
                 </div>
-              ) : (
-                <div className="rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-400">
-                  Generate a roadmap first so the lesson request has an active milestone and lesson seed to build from.
+              ) : null}
+            </div>
+
+            {planPreview ? (
+              <>
+                <div className="headline-card">
+                  <h3>{planPreview.planTitle}</h3>
+                  <p>{planPreview.goalSummary}</p>
                 </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-3">
-              <button
-                className="rounded-full border border-sky-300 bg-sky-200 px-5 py-3 text-sm font-medium text-sky-950 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!planPreview || !supportsInteractiveDomain(planPreview.domainId) || isGeneratingLesson}
-                onClick={() => void handleGenerateLesson()}
-                type="button"
-              >
-                {isGeneratingLesson
-                  ? "Generating..."
-                  : `Generate ${planPreview ? formatDomainLabel(planPreview.domainId) : "domain"} lesson`}
-              </button>
-              <button
-                className="rounded-full border border-cyan-300 bg-cyan-200 px-5 py-3 text-sm font-medium text-cyan-950 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!lessonPreview || !planPreview || !supportsInteractiveDomain(planPreview.domainId) || isGeneratingLesson}
-                onClick={() => void handleGenerateFollowUpLesson()}
-                type="button"
-              >
-                Generate follow-up lesson
-              </button>
-            </div>
-          </div>
 
-          {planPreview && !supportsInteractiveDomain(planPreview.domainId) ? (
-            <div className="mt-4 rounded-2xl border border-stone-800 bg-stone-950/60 p-4 text-sm text-stone-300">
-              {formatDomainLabel(planPreview.domainId)} remains roadmap-only in the current shell. Lesson and replan
-              generation currently support Python and Piano.
-            </div>
-          ) : null}
-
-          {lessonError ? (
-            <div className="mt-4 rounded-2xl border border-amber-700/60 bg-amber-950/30 p-4 text-sm text-amber-100">
-              {lessonError}
-            </div>
-          ) : null}
-
-          <div className="mt-4 grid gap-6 lg:grid-cols-2">
-            <article className="rounded-3xl border border-stone-800 bg-stone-950/60 p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Lesson.generate</p>
-              <h3 className="mt-3 text-2xl font-semibold text-white">{lessonPreview?.title ?? "No lesson generated yet"}</h3>
-              <p className="mt-3 text-sm leading-6 text-stone-300">
-                {lessonPreview?.whyThisNow ?? "The generated lesson will appear here after you run the roadmap and lesson actions."}
-              </p>
-              <p className="mt-2 text-sm text-stone-400">
-                Materials: {lessonPreview?.materialsNeeded.join(", ") ?? "Waiting for lesson output"}
-              </p>
-              <ul className="mt-5 space-y-3 text-sm text-stone-200">
-                {lessonPreview?.tasks.map((task) => (
-                  <li className="rounded-2xl border border-stone-800 p-4" key={task.id}>
-                    <p className="font-medium text-white">{task.title}</p>
-                    <p className="mt-1 text-stone-400">{task.instructions}</p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.2em] text-stone-500">
-                      {task.type} / {task.estimatedMinutes} min / {task.verificationMethod}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="rounded-3xl border border-stone-800 bg-stone-950/60 p-5 text-sm text-stone-300">
-              <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Recovery and next action</p>
-              <div className="mt-3 rounded-2xl border border-stone-800 p-4">
-                <p className="font-medium text-white">Completion contract</p>
-                <p className="mt-2">{lessonPreview?.completionContract.summary ?? "Waiting for generated lesson output."}</p>
-              </div>
-              <div className="mt-4 rounded-2xl border border-stone-800 p-4">
-                <p className="font-medium text-white">If blocked</p>
-                <ul className="mt-2 space-y-2">
-                  {lessonPreview?.ifBlocked.map((item) => (
-                    <li key={item.trigger}>
-                      <span className="font-medium text-stone-100">{item.trigger}</span>: {item.response}
-                    </li>
+                <div className="tag-list">
+                  {planPreview.tags.map((tag) => (
+                    <span className="tag" key={tag}>
+                      {tag}
+                    </span>
                   ))}
-                </ul>
-              </div>
-              <div className="mt-4 rounded-2xl border border-stone-800 p-4">
-                <p className="font-medium text-white">Next default action</p>
-                <p className="mt-2">{lessonPreview?.nextDefaultAction.label ?? "Waiting for generated lesson output."}</p>
-                <p className="mt-2 text-stone-500">{lessonPreview?.nextDefaultAction.rationale}</p>
-              </div>
-              <div className="mt-4 rounded-2xl border border-stone-800 p-4">
-                <p className="font-medium text-white">Quiz checkpoint</p>
-                <p className="mt-2">{lessonPreview?.quiz.question ?? "Generate a lesson to inspect the checkpoint question."}</p>
-              </div>
-            </article>
-          </div>
+                  {planPreview.warnings.map((warning) => (
+                    <span className="tag tag--warning" key={warning}>
+                      {warning}
+                    </span>
+                  ))}
+                </div>
 
-          <div className="mt-6 rounded-3xl border border-stone-800 bg-stone-950/60 p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Plan.replan</p>
-                <h3 className="text-xl font-semibold text-white">Blocked-state replanning</h3>
-                <p className="max-w-2xl text-sm leading-6 text-stone-300">
-                  This path generates a structured diagnosis plus a replacement lesson seed that can be fed directly
-                  back into lesson generation.
-                </p>
+                <div className="milestone-list">
+                  {planPreview.milestones.map((milestone) => (
+                    <article className="milestone-card" key={milestone.id}>
+                      <div className="milestone-card__header">
+                        <span className="milestone-card__index">{milestone.index}</span>
+                        <div>
+                          <h4>{milestone.title}</h4>
+                          <p>{milestone.purpose}</p>
+                        </div>
+                      </div>
+                      <div className="milestone-card__footer">
+                        <span className="meta-chip">{milestone.status}</span>
+                        <span className="fine-print">Success criteria: {milestone.successCriteria.join(" / ")}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="empty-state">
+                <h3>先生成一份路线图</h3>
+                <p>生成结果会在这里展示目标摘要、里程碑、标签和风险提示，方便你继续生成今日课程。</p>
               </div>
-              <div className="flex flex-wrap gap-3">
+            )}
+          </article>
+
+          <article className="panel panel--stretch">
+            <div className="panel__header">
+              <div>
+                <p className="panel__eyebrow">Lesson.generate</p>
+                <h2>今日课程</h2>
+              </div>
+              <div className="button-group">
                 <button
-                  className="rounded-full border border-stone-700 px-4 py-2 text-sm text-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!lessonPreview || !planPreview || !supportsInteractiveDomain(planPreview.domainId) || isGeneratingReplan}
-                  onClick={() => void handleReplan("too_hard")}
+                  className="button button--secondary"
+                  disabled={!planSupportsInteractiveLesson || isGeneratingLesson}
+                  onClick={() => void handleGenerateLesson()}
                   type="button"
                 >
-                  Too hard
+                  {isGeneratingLesson
+                    ? "生成中..."
+                    : `生成${planPreview ? formatDomainLabel(planPreview.domainId) : ""}课程`}
                 </button>
                 <button
-                  className="rounded-full border border-stone-700 px-4 py-2 text-sm text-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!lessonPreview || !planPreview || !supportsInteractiveDomain(planPreview.domainId) || isGeneratingReplan}
-                  onClick={() => void handleReplan("pace_too_fast")}
+                  className="button button--ghost"
+                  disabled={!canGenerateFollowUpLesson || isGeneratingLesson}
+                  onClick={() => void handleGenerateFollowUpLesson()}
                   type="button"
                 >
-                  Pace too fast
-                </button>
-                <button
-                  className="rounded-full border border-stone-700 px-4 py-2 text-sm text-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!lessonPreview || !planPreview || !supportsInteractiveDomain(planPreview.domainId) || isGeneratingReplan}
-                  onClick={() => void handleReplan("inactive")}
-                  type="button"
-                >
-                  Inactive
+                  生成后续课程
                 </button>
               </div>
             </div>
 
-            {replanError ? (
-              <div className="mt-4 rounded-2xl border border-amber-700/60 bg-amber-950/30 p-4 text-sm text-amber-100">
-                {replanError}
+            {planPreview ? (
+              <div className="summary-card summary-card--compact">
+                <div className="summary-card__item">
+                  <span>当前领域</span>
+                  <strong>{formatDomainLabel(planPreview.domainId)}</strong>
+                </div>
+                <div className="summary-card__item">
+                  <span>激活里程碑</span>
+                  <strong>{activeMilestone?.title ?? "尚未确定"}</strong>
+                </div>
+                <div className="summary-card__item">
+                  <span>课程类型</span>
+                  <strong>{planPreview.todayLessonSeed.lessonType}</strong>
+                </div>
+                <div className="summary-card__item">
+                  <span>历史课程</span>
+                  <strong>{lessonHistory.length}</strong>
+                </div>
               </div>
             ) : null}
 
-            {replanPreview ? (
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-stone-800 p-4 text-sm text-stone-300">
-                  <p className="font-medium text-white">Diagnosis</p>
-                  <p className="mt-2">{replanPreview.diagnosis}</p>
-                  <p className="mt-4 font-medium text-white">User message</p>
-                  <p className="mt-2">{replanPreview.userMessage}</p>
-                  <p className="mt-4 font-medium text-white">Pace change</p>
-                  <p className="mt-2">{replanPreview.paceChange}</p>
-                  <p className="mt-4 font-medium text-white">Milestone adjustment</p>
-                  <p className="mt-2">{replanPreview.milestoneAdjustment}</p>
-                </div>
-                <div className="rounded-2xl border border-stone-800 p-4 text-sm text-stone-300">
-                  <p className="font-medium text-white">{replanPreview.replacementLessonTitle}</p>
-                  <p className="mt-2">{replanPreview.replacementLesson.reason}</p>
-                  <p className="mt-4">Focus: {replanPreview.replacementLesson.focus}</p>
-                  <p className="mt-2">First step: {replanPreview.replacementLesson.firstStep}</p>
-                  <p className="mt-4">
-                    Replacement seed: {replanPreview.replacementLessonSeed.lessonType} / {replanPreview.replacementLessonSeed.objective}
-                  </p>
-                  <button
-                    className="mt-5 rounded-full border border-emerald-300 bg-emerald-200 px-5 py-3 text-sm font-medium text-emerald-950 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isGeneratingLesson}
-                    onClick={() =>
-                      void handleGenerateLesson({
-                        generationMode: "replacement",
-                        lessonSeed: replanPreview.replacementLessonSeed,
-                        lessonHistory: lessonPreview ? [...lessonHistory, lessonPreview].slice(-3) : lessonHistory
-                      })
-                    }
-                    type="button"
-                  >
-                    Generate replacement lesson
-                  </button>
-                </div>
+            {planPreview && !planSupportsInteractiveLesson ? (
+              <div className="inline-alert inline-alert--neutral">
+                当前桌面壳只支持 Python 和 Piano 的课程生成与 replan。{formatDomainLabel(planPreview.domainId)} 目前仍是路线图-only。
               </div>
+            ) : null}
+
+            {lessonError ? (
+              <div className="inline-alert" role="alert">
+                {lessonError}
+              </div>
+            ) : null}
+
+            {lessonPreview ? (
+              <>
+                <div className="headline-card">
+                  <h3>{lessonPreview.title}</h3>
+                  <p>{lessonPreview.whyThisNow}</p>
+                </div>
+
+                <div className="split-grid">
+                  <div className="detail-card">
+                    <p className="detail-card__title">需要准备</p>
+                    <p>{lessonPreview.materialsNeeded.join(" · ") || "无需额外材料"}</p>
+                  </div>
+                  <div className="detail-card">
+                    <p className="detail-card__title">默认下一步</p>
+                    <p>{lessonPreview.nextDefaultAction.label}</p>
+                    <span className="fine-print">{lessonPreview.nextDefaultAction.rationale}</span>
+                  </div>
+                </div>
+
+                <div className="lesson-task-list">
+                  {lessonPreview.tasks.map((task) => (
+                    <article className="lesson-task" key={task.id}>
+                      <div className="lesson-task__header">
+                        <h4>{task.title}</h4>
+                        <span className="meta-chip">{task.estimatedMinutes} 分钟</span>
+                      </div>
+                      <p>{task.instructions}</p>
+                      <span className="fine-print">
+                        {task.type} / {task.verificationMethod}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="split-grid">
+                  <div className="detail-card">
+                    <p className="detail-card__title">完成标准</p>
+                    <p>{lessonPreview.completionContract.summary}</p>
+                  </div>
+                  <div className="detail-card">
+                    <p className="detail-card__title">Quiz checkpoint</p>
+                    <p>{lessonPreview.quiz.question}</p>
+                  </div>
+                </div>
+
+                <div className="detail-card">
+                  <p className="detail-card__title">卡住时怎么处理</p>
+                  <div className="blocked-list">
+                    {lessonPreview.ifBlocked.map((item) => (
+                      <div className="blocked-list__item" key={item.trigger}>
+                        <strong>{item.trigger}</strong>
+                        <span>{item.response}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             ) : (
-              <div className="mt-5 rounded-2xl border border-stone-800 p-4 text-sm text-stone-400">
-                Generate a lesson first, then run a replan reason to inspect the structured recovery path.
+              <div className="empty-state">
+                <h3>路线图之后，再生成今天这一课</h3>
+                <p>这里会展示课程标题、任务清单、完成标准、卡住时的恢复动作，以及下一步推荐。</p>
               </div>
             )}
+          </article>
+        </section>
+
+        <section className="panel panel--stretch">
+          <div className="panel__header">
+            <div>
+              <p className="panel__eyebrow">Plan.replan</p>
+              <h2>卡住后的恢复路径</h2>
+            </div>
+            <div className="button-group">
+              <button
+                className="button button--ghost"
+                disabled={!canRunReplan || isGeneratingReplan}
+                onClick={() => void handleReplan("too_hard")}
+                type="button"
+              >
+                太难了
+              </button>
+              <button
+                className="button button--ghost"
+                disabled={!canRunReplan || isGeneratingReplan}
+                onClick={() => void handleReplan("pace_too_fast")}
+                type="button"
+              >
+                节奏太快
+              </button>
+              <button
+                className="button button--ghost"
+                disabled={!canRunReplan || isGeneratingReplan}
+                onClick={() => void handleReplan("inactive")}
+                type="button"
+              >
+                中断太久
+              </button>
+            </div>
           </div>
+
+          {replanError ? (
+            <div className="inline-alert" role="alert">
+              {replanError}
+            </div>
+          ) : null}
+
+          {replanPreview ? (
+            <div className="split-grid split-grid--wide">
+              <div className="detail-card">
+                <p className="detail-card__title">诊断结果</p>
+                <p>{replanPreview.diagnosis}</p>
+                <div className="detail-card__stack">
+                  <div>
+                    <strong>给用户的话</strong>
+                    <p>{replanPreview.userMessage}</p>
+                  </div>
+                  <div>
+                    <strong>节奏调整</strong>
+                    <p>{replanPreview.paceChange}</p>
+                  </div>
+                  <div>
+                    <strong>里程碑修正</strong>
+                    <p>{replanPreview.milestoneAdjustment}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="detail-card">
+                <p className="detail-card__title">{replanPreview.replacementLessonTitle}</p>
+                <p>{replanPreview.replacementLesson.reason}</p>
+                <div className="detail-card__stack">
+                  <div>
+                    <strong>Focus</strong>
+                    <p>{replanPreview.replacementLesson.focus}</p>
+                  </div>
+                  <div>
+                    <strong>第一步</strong>
+                    <p>{replanPreview.replacementLesson.firstStep}</p>
+                  </div>
+                  <div>
+                    <strong>替代 lesson seed</strong>
+                    <p>
+                      {replanPreview.replacementLessonSeed.lessonType} / {replanPreview.replacementLessonSeed.objective}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className="button button--accent button--wide"
+                  disabled={isGeneratingLesson}
+                  onClick={() =>
+                    void handleGenerateLesson({
+                      generationMode: "replacement",
+                      lessonSeed: replanPreview.replacementLessonSeed,
+                      lessonHistory: lessonPreview ? [...lessonHistory, lessonPreview].slice(-3) : lessonHistory
+                    })
+                  }
+                  type="button"
+                >
+                  生成替代课程
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state empty-state--compact">
+              <h3>先有课程，replan 才有上下文</h3>
+              <p>当用户觉得太难、节奏过快或中断太久时，这里会生成诊断、节奏建议和新的 lesson seed。</p>
+            </div>
+          )}
         </section>
       </div>
     </main>
