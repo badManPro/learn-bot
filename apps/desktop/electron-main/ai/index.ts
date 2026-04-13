@@ -6,55 +6,79 @@ import {
   generateReplanForDomain,
   type LessonGenerationRequest,
   type PlanGenerationRequest,
-  type ReplanGenerationRequest
+  type ReplanGenerationRequest,
+  type StructuredTextModel
 } from "@learn-bot/ai-orchestrator";
 
-function resolvePlanModel() {
-  return process.env.LEARN_BOT_PLAN_MODEL ?? "gpt-5-mini";
+import { getSessionSnapshot } from "../auth";
+import { createCodexCliStructuredModel } from "./codex-cli-client";
+
+type DesktopAiProvider = "codex-cli" | "openai-api-key";
+
+function defaultModelForProvider(_provider: DesktopAiProvider) {
+  return "gpt-5.4";
 }
 
-function resolveLessonModel() {
-  return process.env.LEARN_BOT_LESSON_MODEL ?? process.env.LEARN_BOT_PLAN_MODEL ?? "gpt-5-mini";
+function resolvePlanModel(provider: DesktopAiProvider) {
+  return process.env.LEARN_BOT_PLAN_MODEL ?? defaultModelForProvider(provider);
 }
 
-function resolveReplanModel() {
-  return process.env.LEARN_BOT_REPLAN_MODEL ?? process.env.LEARN_BOT_PLAN_MODEL ?? "gpt-5-mini";
+function resolveLessonModel(provider: DesktopAiProvider) {
+  return process.env.LEARN_BOT_LESSON_MODEL ?? process.env.LEARN_BOT_PLAN_MODEL ?? defaultModelForProvider(provider);
 }
 
-function requireOpenAIApiKey() {
-  const apiKey = process.env.OPENAI_API_KEY;
+function resolveReplanModel(provider: DesktopAiProvider) {
+  return process.env.LEARN_BOT_REPLAN_MODEL ?? process.env.LEARN_BOT_PLAN_MODEL ?? defaultModelForProvider(provider);
+}
 
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not set. The desktop AI generation path is wired, but it cannot run without an API key.");
+function readFallbackApiKey() {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  return apiKey ? apiKey : null;
+}
+
+async function createStructuredClient(): Promise<{ client: StructuredTextModel; provider: DesktopAiProvider }> {
+  const session = await getSessionSnapshot();
+  if (session.status === "authenticated") {
+    return {
+      client: createCodexCliStructuredModel(),
+      provider: "codex-cli"
+    };
   }
 
-  return apiKey;
-}
+  const fallbackApiKey = readFallbackApiKey();
+  if (fallbackApiKey) {
+    return {
+      client: createOpenAIStructuredModel(fallbackApiKey),
+      provider: "openai-api-key"
+    };
+  }
 
-function createStructuredClient() {
-  return createOpenAIStructuredModel(requireOpenAIApiKey());
+  throw new Error("当前未检测到可复用的 `codex login` 登录态，也未设置 OPENAI_API_KEY。请先完成 Codex 浏览器登录，或在开发环境中配置 API key。");
 }
 
 export async function generateDesktopPlan(input: PlanGenerationRequest): Promise<PlanContract> {
+  const runtime = await createStructuredClient();
   return generatePlan({
-    client: createStructuredClient(),
+    client: runtime.client,
     input,
-    model: resolvePlanModel()
+    model: resolvePlanModel(runtime.provider)
   });
 }
 
 export async function generateDesktopLesson(input: LessonGenerationRequest): Promise<LessonContract> {
+  const runtime = await createStructuredClient();
   return generateLessonForDomain({
-    client: createStructuredClient(),
+    client: runtime.client,
     input,
-    model: resolveLessonModel()
+    model: resolveLessonModel(runtime.provider)
   });
 }
 
 export async function generateDesktopReplan(input: ReplanGenerationRequest): Promise<ReplanContract> {
+  const runtime = await createStructuredClient();
   return generateReplanForDomain({
-    client: createStructuredClient(),
+    client: runtime.client,
     input,
-    model: resolveReplanModel()
+    model: resolveReplanModel(runtime.provider)
   });
 }

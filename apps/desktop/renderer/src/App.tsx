@@ -43,8 +43,20 @@ function supportsInteractiveDomain(domainId: string) {
 function normalizeRuntimeError(message: string) {
   const compactMessage = message.replace(/^Error invoking remote method '[^']+': Error:\s*/u, "");
 
+  if (compactMessage.includes("当前没有可用的 OpenAI 桌面会话")) {
+    return compactMessage;
+  }
+
+  if (compactMessage.includes("当前未检测到可复用的 `codex login` 登录态")) {
+    return compactMessage;
+  }
+
+  if (compactMessage.includes("未检测到可复用的 `codex login` 登录态")) {
+    return compactMessage;
+  }
+
   if (compactMessage.includes("OPENAI_API_KEY is not set")) {
-    return "未设置 OPENAI_API_KEY。当前构建已经打通桌面 IPC 和编排链路，但还不能真正请求模型。";
+    return "当前未检测到可复用的 `codex login` 登录态，也未设置 OPENAI_API_KEY。请先完成 Codex 浏览器登录，或在开发环境中配置 API key。";
   }
 
   return compactMessage;
@@ -242,6 +254,16 @@ export default function App() {
   const planSupportsInteractiveLesson = Boolean(planPreview && supportsInteractiveDomain(planPreview.domainId));
   const canGenerateFollowUpLesson = Boolean(lessonPreview && planSupportsInteractiveLesson);
   const canRunReplan = Boolean(lessonPreview && planSupportsInteractiveLesson);
+  const loginButtonLabel =
+    sessionState === "authenticated"
+      ? "检查 Codex 登录状态"
+      : isOpeningLogin
+        ? "正在打开浏览器..."
+        : "启动 Codex 浏览器登录";
+  const loginFinePrint =
+    sessionState === "authenticated"
+      ? "当前已经检测到可复用的 `codex login` 会话，所以这里不会再跳转浏览器。如果要切换账号，请先在终端执行 `codex logout`，再回来重新登录。"
+      : "桌面端会优先复用本机 `codex login` 登录态；没有可用会话时，会通过官方 Codex CLI 拉起浏览器登录。登录成功后，主进程直接通过 Codex CLI 请求模型；开发环境下仍可回退到 `OPENAI_API_KEY`。";
 
   return (
     <main className="app-shell">
@@ -293,7 +315,7 @@ export default function App() {
             <div className="panel__header">
               <div>
                 <p className="panel__eyebrow">Access</p>
-                <h2>OpenAI / ChatGPT 登录</h2>
+                <h2>OpenAI / Codex 登录</h2>
               </div>
               <span className={statusTone(sessionState)}>{formatSessionStatus(sessionState)}</span>
             </div>
@@ -314,12 +336,9 @@ export default function App() {
 
             <div className="panel__actions">
               <button className="button button--primary" disabled={isOpeningLogin} onClick={() => void handleLogin()} type="button">
-                {isOpeningLogin ? "正在打开浏览器..." : "启动 OpenAI OAuth 登录"}
+                {loginButtonLabel}
               </button>
-              <p className="fine-print">
-                桌面端会优先复用本机 Codex 登录状态；没有可用会话时，才会从 `https://auth.openai.com/authorize`
-                发起带 `client_id`、`redirect_uri`、`state` 与 PKCE 的真实 OAuth 请求。
-              </p>
+              <p className="fine-print">{loginFinePrint}</p>
             </div>
           </article>
 
@@ -363,7 +382,10 @@ export default function App() {
                 {planError}
               </div>
             ) : (
-              <p className="fine-print">计划生成已走 Electron main process + 结构化输出校验，缺的是模型密钥和正式认证闭环，不是按钮本身。</p>
+              <p className="fine-print">
+                计划生成已走 Electron main process + 结构化输出校验；默认复用本机 `codex login` 会话请求模型，开发环境下也可回退到
+                `OPENAI_API_KEY`。
+              </p>
             )}
           </article>
         </section>

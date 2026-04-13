@@ -182,6 +182,11 @@
 | Generic plan orchestration created duplicate star exports through `packages/ai-orchestrator/src/index.ts` | Moved lesson/replan shared imports onto `plan.ts` directly and kept `python-plan.ts` as wrapper-only compatibility exports |
 | Expanding shared plan contracts broke existing persisted roadmap records | Added `enrichMilestones()` in the web plan generator so DB milestones are upgraded into the richer shared roadmap shape at read time |
 | Zod defaults widened orchestrator types during Next type-checking | Re-parsed the model output through `PlanSchema.parse()` inside `generatePythonPlan()` before normalization |
+| Desktop OAuth login existed but desktop AI generation still required `OPENAI_API_KEY` | Reused the restored/refreshed Learn Bot or Codex access token in Electron main and kept `OPENAI_API_KEY` only as a development fallback |
+| Local Codex / Learn Bot access tokens only carried connector scopes, not `api.responses.write` | Updated desktop auth to request `api.responses.write`, refuse to reuse scope-deficient tokens for model calls, and force reauthorization when the user clicks login |
+| JARVIS does not use a hand-built OpenAI OAuth URL for desktop auth | It shells out to the official `codex login` / `codex login status` flow and routes model calls through `codex exec`, so the login and inference boundary both stay inside the supported Codex CLI path |
+| The local Codex CLI session can execute desktop prompts successfully when the model is supported | `codex exec` returned valid JSON for both `gpt-5.2-codex` and `gpt-5.4`, while `gpt-5-mini` failed for a ChatGPT-backed Codex session |
+| Learn Bot’s Electron main process could report “Codex CLI not installed” even when the shell had `codex` | The Electron runtime was depending on inherited PATH; explicitly resolving `/usr/local/bin/codex` / `/opt/homebrew/bin/codex` closes that gap on this machine |
 
 ## Resources
 - `/Users/casper/Documents/project/test-skills/docs/plans/2026-04-05-ai-learning-assistant-tech-spec.md`

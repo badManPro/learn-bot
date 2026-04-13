@@ -855,5 +855,82 @@
 | What have I learned? | The last missing product glue was host-safe onboarding redirects plus a server-driven regeneration path that does not depend on hydration timing |
 | What have I done? | Added Playwright smoke coverage, finished the README, wired roadmap and lesson data to the live guest session, and verified unit, lint, build, Prisma generate, and E2E flows |
 
+### Phase 14: Desktop Auth-Backed Model Access
+- **Status:** complete
+- Actions taken:
+  - Refactored `apps/desktop/electron-main/auth/index.ts` so Electron main can resolve a usable refreshed auth record from Learn Bot or Codex local session state.
+  - Exported a main-process-only `getDesktopAccessToken()` helper and rewired desktop plan, lesson, and replan generation to use that token before any `OPENAI_API_KEY` fallback.
+  - Updated the desktop renderer copy so the user-facing error and helper text reflect the real runtime behavior instead of the earlier “IPC is wired but model access is not” placeholder.
+  - Updated `README.md` so desktop auth is documented as session-first rather than API-key-only.
+- Files created/modified:
+  - `apps/desktop/electron-main/auth/index.ts` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `README.md` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+- Verification:
+  - `pnpm lint` ✅
+  - `pnpm exec tsc --noEmit -p apps/desktop/tsconfig.json` ✅
+  - `pnpm build` ✅
+
+### Phase 15: Desktop OAuth Scope Repair
+- **Status:** complete
+- Actions taken:
+  - Inspected the local persisted Learn Bot / Codex auth records and confirmed the current access token only had connector scopes, not `api.responses.write`.
+  - Updated desktop auth scope assembly so browser OAuth explicitly requests `api.responses.write` in addition to the existing scopes.
+  - Changed desktop login reuse behavior so scope-deficient sessions no longer short-circuit the login button and no longer get reused for model calls.
+  - Preserved the specific missing-scope error through the AI runtime so the renderer can show a concrete remediation path instead of a generic auth failure.
+- Files created/modified:
+  - `apps/desktop/electron-main/auth/index.ts` (updated)
+  - `apps/desktop/electron-main/ai/index.ts` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+- Verification:
+  - `pnpm exec tsc --noEmit -p apps/desktop/tsconfig.json` ✅
+  - `pnpm lint` ✅
+  - `pnpm build` ✅
+
+### Phase 16: Switch Desktop Auth And Inference To Official Codex CLI
+- **Status:** complete
+- Actions taken:
+  - Compared Learn Bot’s broken custom OpenAI OAuth experiment with the adjacent JARVIS project and confirmed JARVIS uses official `codex login` / `codex exec` instead of reusing `auth.json` or self-constructing an authorize URL.
+  - Replaced Learn Bot’s desktop auth service with a Codex CLI-backed status/login flow that shells out to `codex login status` and `codex login`.
+  - Added a Codex CLI-backed structured model client for Electron main so desktop plan, lesson, and replan generation now run through `codex exec` when a local Codex session is available.
+  - Updated desktop copy to describe the real login path and switched the desktop default model to `gpt-5.4`.
+- Files created/modified:
+  - `apps/desktop/electron-main/auth/index.ts` (rewritten)
+  - `apps/desktop/electron-main/ai/codex-cli-client.ts` (created)
+  - `apps/desktop/electron-main/ai/index.ts` (rewritten)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `README.md` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+- Verification:
+  - `pnpm exec tsc --noEmit -p apps/desktop/tsconfig.json` ✅
+  - `pnpm lint` ✅
+  - `pnpm build` ✅
+  - `codex exec --skip-git-repo-check --color never --sandbox read-only -c 'model_provider="openai"' -m gpt-5.2-codex ...` ✅
+  - `codex exec --skip-git-repo-check --color never --sandbox read-only -c 'model_provider="openai"' -m gpt-5.4 ...` ✅
+
+### Phase 17: Stabilize Codex CLI Discovery In Electron Main
+- **Status:** complete
+- Actions taken:
+  - Confirmed the local shell resolves `codex` to `/usr/local/bin/codex`, while the Electron main process could still fail with a false “Codex CLI not installed” result if PATH inheritance was incomplete.
+  - Added a shared `codex-cli.ts` helper so Electron main resolves the CLI from explicit common install paths before falling back to PATH.
+  - Rewired both desktop auth and desktop Codex inference to use the same executable resolution and environment normalization.
+- Files created/modified:
+  - `apps/desktop/electron-main/codex-cli.ts` (created)
+  - `apps/desktop/electron-main/auth/index.ts` (updated)
+  - `apps/desktop/electron-main/ai/codex-cli-client.ts` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+- Verification:
+  - `pnpm exec tsc --noEmit -p apps/desktop/tsconfig.json` ✅
+  - `pnpm lint` ✅
+  - `pnpm build` ✅
+
 ---
 *Update after completing each phase or encountering errors*
