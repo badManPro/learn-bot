@@ -1,5 +1,16 @@
 # Findings & Decisions
 
+## 2026-04-14 Desktop Shell Refactor Findings
+- The user's request maps to the Electron renderer, not the legacy Next.js web pages. The web app already has multiple routes, while the desktop app still renders auth, plan setup, roadmap preview, lesson preview, and replan inside one large `apps/desktop/renderer/src/App.tsx`.
+- The current desktop renderer mixes state orchestration and all visible UI in a single component. The right refactor boundary is to keep the async/auth/generation/persistence logic in the root, then move the visible surface into tabbed views and presentational sections.
+- The requested information architecture is best represented as three views with a persistent left rail: `今日` for the active lesson and recovery actions, `整体路线` for milestones and plan summary, and `设置` for login state plus generation defaults.
+- The visual direction should move away from the current experimental glow-heavy dashboard toward a more stable modern desktop product shell while keeping the existing generation overlay for long-running actions.
+- Important implementation constraint: preserve `desktopApi` auth/plan/lesson/replan/state flows and local snapshot saving so the UI refactor does not regress the working desktop runtime.
+- The implemented split keeps orchestration in the root `App.tsx`, moves visual helpers into `apps/desktop/renderer/src/lib/desktop-display.ts`, and breaks the visible UI into `components/app-sidebar.tsx` plus `views/today-view.tsx`, `views/roadmap-view.tsx`, and `views/settings-view.tsx`.
+- The renderer now reads like a real desktop product shell: dark left rail, light workspace, persistent top summary, and focused view-level cards instead of one long stacked dashboard.
+- The new settings page now owns the plan-generation baseline in the renderer session. Goal text, current level, weekly time budget, and target deadline are editable there, and both roadmap generation and lesson/replan generation read from that same shared input state.
+- Verification result for this UI pass: `pnpm --filter @learn-bot/desktop build` and `pnpm lint:desktop` both pass after the renderer split and CSS rewrite.
+
 ## 2026-04-08 Product Direction Findings
 - The current product is still architected around a frozen MVP spec that supports exactly one path, `python_for_ai_workflows`, and explicitly excludes desktop app support and real API-key integration.
 - The current goal mapping path is deterministic keyword matching in [src/lib/ai/goal-mapper.ts](/Users/casper/Documents/try/learn-bot/src/lib/ai/goal-mapper.ts), not model-based intent understanding.

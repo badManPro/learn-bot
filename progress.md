@@ -1,5 +1,32 @@
 # Progress Log
 
+## Session: 2026-04-14
+
+### Phase: Desktop Shell Refactor
+- **Status:** complete
+- Actions taken:
+  - Confirmed that the requested "home page" issue is in the Electron renderer, not the legacy web app.
+  - Audited `apps/desktop/renderer/src/App.tsx` and verified that auth, plan generation, lesson generation, replan, and persisted desktop state are currently all rendered in one stacked page.
+  - Chose the refactor boundary: keep behavior and IPC contracts intact, but split the renderer surface into a left-side navigation with three views, `今日`, `整体路线`, and `设置`.
+  - Set the visual target to a cleaner modern desktop shell with better hierarchy and spacing, while preserving the existing generation overlay.
+  - Rebuilt the renderer into a modular app shell: root state remains in `App.tsx`, while sidebar navigation and the three main views now live in dedicated `components/` and `views/` files.
+  - Rewrote the desktop CSS to a left-rail plus light workspace layout with stronger visual hierarchy, modern cards, and responsive behavior for narrower window widths.
+  - Promoted the new settings page from static information to an actual session-level control surface: goal text, level, weekly time budget, and target deadline can now be edited there and are used by subsequent plan / lesson / replan generations.
+- Verification:
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm lint:desktop` ✅
+- Files created/modified:
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `apps/desktop/renderer/src/app.css` (updated)
+  - `apps/desktop/renderer/src/lib/desktop-display.ts` (created)
+  - `apps/desktop/renderer/src/components/app-sidebar.tsx` (created)
+  - `apps/desktop/renderer/src/views/today-view.tsx` (created)
+  - `apps/desktop/renderer/src/views/roadmap-view.tsx` (created)
+  - `apps/desktop/renderer/src/views/settings-view.tsx` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+
 ## Session: 2026-04-08
 
 ### Phase 1: Product and Architecture Audit

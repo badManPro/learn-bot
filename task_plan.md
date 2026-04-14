@@ -1,5 +1,38 @@
 # Task Plan: AI-Native Multi-Domain Learning Product
 
+## Active Task: 2026-04-14 Desktop Shell Refactor
+
+### Goal
+Refactor the Electron renderer so the current all-in-one desktop page becomes a modular app shell with a left navigation and three focused views: `今日`, `整体路线`, and `设置`, while preserving the existing desktop auth, plan generation, lesson generation, replan, and local persistence behavior.
+
+### Current UI Refactor Phase
+Phase 4
+
+### UI Refactor Phases
+
+#### Phase 1: Discovery and Boundaries
+- [x] Confirm whether the requested "home page" refers to the desktop renderer or the legacy web pages
+- [x] Audit the current renderer structure and identify which data/actions must remain intact
+- [x] Capture the visual direction and information architecture target
+- **Status:** complete
+
+#### Phase 2: Renderer Module Split
+- [x] Extract the single-file renderer into reusable sections/components
+- [x] Introduce left-side tab navigation for `今日`, `整体路线`, and `设置`
+- [x] Keep generation overlay and async state handling intact during the split
+- **Status:** complete
+
+#### Phase 3: Visual Redesign
+- [x] Replace the stacked dashboard layout with a cleaner modern desktop shell
+- [x] Improve hierarchy, spacing, and focus states without losing the current product capabilities
+- [x] Ensure the layout works on narrower window widths as well
+- **Status:** complete
+
+#### Phase 4: Verification
+- [x] Run the desktop build after the renderer refactor
+- [x] Record any remaining UX or testing gaps
+- **Status:** complete
+
 ## Goal
 Replace deterministic template-based roadmap and lesson generation with a real-model architecture, support multiple learning domains, define the Electron and authentication direction, and produce an implementation plan that drives the next product phase.
 
