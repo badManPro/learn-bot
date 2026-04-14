@@ -951,5 +951,28 @@
   - `pnpm --filter @learn-bot/desktop build` ✅
   - `pnpm lint:desktop` ✅
 
+## 2026-04-14 - Desktop roadmap / lesson persistence
+- **Status:** complete
+- Actions taken:
+  - Confirmed the desktop shell had no persistence path at all: generated roadmap, lesson, lesson history, and replan lived only in renderer `useState`, so every desktop relaunch started empty.
+  - Added `DesktopLearningState` plus `state.load` / `state.save` IPC contracts so the renderer can hydrate and persist without direct filesystem access.
+  - Added `apps/desktop/electron-main/learning-state.ts`, a JSON-backed store under Electron `userData` that validates saved plan / lesson / replan payloads with the shared AI contract schemas and ignores malformed snapshots safely.
+  - Wired the renderer to restore saved state on startup, auto-save changes after generation, and surface a visible “本地存档异常” banner if local persistence fails.
+  - Removed the direct `zod` import from the desktop main module after electron-vite reported an unresolved top-level dependency; the store now reuses `@learn-bot/ai-contracts` schemas directly.
+- Files created/modified:
+  - `apps/desktop/shared/contracts.ts` (updated)
+  - `apps/desktop/electron-preload/api.ts` (updated)
+  - `apps/desktop/electron-main/main.ts` (updated)
+  - `apps/desktop/electron-main/learning-state.ts` (created)
+  - `apps/desktop/electron-main/learning-state.test.ts` (created)
+  - `apps/desktop/renderer/src/App.tsx` (updated)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+- Verification:
+  - `pnpm exec eslint apps/desktop --config eslint.config.mjs` ✅
+  - `pnpm exec vitest --config vitest.config.ts` (from `apps/desktop`) ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+
 ---
 *Update after completing each phase or encountering errors*

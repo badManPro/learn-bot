@@ -6,7 +6,9 @@ export const ipcChannels = {
   authSessionGet: "auth:session:get",
   planGenerate: "plan:generate",
   planReplan: "plan:replan",
-  lessonGenerate: "lesson:generate"
+  lessonGenerate: "lesson:generate",
+  stateLoad: "state:load",
+  stateSave: "state:save"
 } as const;
 
 export type DesktopSessionStatus = "anonymous" | "pending" | "authenticated";
@@ -17,6 +19,22 @@ export type DesktopSession = {
   accountLabel: string | null;
   loginHint: string;
 };
+
+export type DesktopLearningState = {
+  plan: PlanContract | null;
+  lesson: LessonContract | null;
+  lessonHistory: LessonContract[];
+  replan: ReplanContract | null;
+};
+
+export function createEmptyDesktopLearningState(): DesktopLearningState {
+  return {
+    plan: null,
+    lesson: null,
+    lessonHistory: [],
+    replan: null
+  };
+}
 
 export type DesktopApi = {
   auth: {
@@ -31,5 +49,9 @@ export type DesktopApi = {
   };
   lesson: {
     generate: (input: LessonGenerationRequest) => Promise<LessonContract>;
+  };
+  state: {
+    load: () => Promise<DesktopLearningState>;
+    save: (input: DesktopLearningState) => Promise<DesktopLearningState>;
   };
 };

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import type { LessonContract, PlanContract, ReplanContract, ReplanReason, TodayLessonSeed } from "@learn-bot/ai-contracts";
 import type { LessonGenerationRequest, PlanGenerationRequest, ReplanGenerationRequest } from "@learn-bot/ai-orchestrator";
 
-import type { DesktopSession, DesktopSessionStatus } from "../../shared/contracts";
+import type { DesktopLearningState, DesktopSession, DesktopSessionStatus } from "../../shared/contracts";
+import { createEmptyDesktopLearningState } from "../../shared/contracts";
 import { GenerationOverlay } from "./generation-overlay";
 
 const DEFAULT_PLAN_REQUEST: PlanGenerationRequest = {
@@ -116,6 +117,7 @@ export default function App() {
   const [lessonHistory, setLessonHistory] = useState<LessonContract[]>([]);
   const [replanPreview, setReplanPreview] = useState<ReplanContract | null>(null);
   const [bridgeError, setBridgeError] = useState<string | null>(null);
+  const [stateError, setStateError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
   const [lessonError, setLessonError] = useState<string | null>(null);
@@ -126,6 +128,14 @@ export default function App() {
   const [isGeneratingReplan, setIsGeneratingReplan] = useState(false);
   const [activeGenerationKind, setActiveGenerationKind] = useState<ActiveGenerationKind | null>(null);
   const [activeGenerationStep, setActiveGenerationStep] = useState(0);
+  const [hasHydratedLearningState, setHasHydratedLearningState] = useState(false);
+
+  function applyLearningState(nextState: DesktopLearningState) {
+    setPlanPreview(nextState.plan);
+    setLessonPreview(nextState.lesson);
+    setLessonHistory(nextState.lessonHistory);
+    setReplanPreview(nextState.replan);
+  }
 
   useEffect(() => {
     if (!hasDesktopApi) {
@@ -135,19 +145,29 @@ export default function App() {
 
     let disposed = false;
 
-    void window.desktopApi.auth.session
-      .get()
-      .then((nextSession) => {
-        if (!disposed) {
-          setSession(nextSession);
-        }
-      })
-      .catch((error) => {
-        if (!disposed) {
-          const message = error instanceof Error ? error.message : "Failed to read desktop session.";
-          setBridgeError(normalizeRuntimeError(message));
-        }
-      });
+    void Promise.allSettled([window.desktopApi.auth.session.get(), window.desktopApi.state.load()]).then(([sessionResult, stateResult]) => {
+      if (disposed) {
+        return;
+      }
+
+      if (sessionResult.status === "fulfilled") {
+        setSession(sessionResult.value);
+      } else {
+        const message = sessionResult.reason instanceof Error ? sessionResult.reason.message : "Failed to read desktop session.";
+        setBridgeError(normalizeRuntimeError(message));
+      }
+
+      if (stateResult.status === "fulfilled") {
+        applyLearningState(stateResult.value);
+        setStateError(null);
+      } else {
+        const message = stateResult.reason instanceof Error ? stateResult.reason.message : "Failed to restore saved desktop data.";
+        applyLearningState(createEmptyDesktopLearningState());
+        setStateError(normalizeRuntimeError(message));
+      }
+
+      setHasHydratedLearningState(true);
+    });
 
     return () => {
       disposed = true;
@@ -166,6 +186,39 @@ export default function App() {
 
     return () => window.clearInterval(timer);
   }, [activeGenerationKind]);
+
+  useEffect(() => {
+    if (!hasDesktopApi || !hasHydratedLearningState) {
+      return undefined;
+    }
+
+    let disposed = false;
+    const timer = window.setTimeout(() => {
+      void window.desktopApi.state
+        .save({
+          plan: planPreview,
+          lesson: lessonPreview,
+          lessonHistory,
+          replan: replanPreview
+        })
+        .then(() => {
+          if (!disposed) {
+            setStateError(null);
+          }
+        })
+        .catch((error) => {
+          if (!disposed) {
+            const message = error instanceof Error ? error.message : "Failed to save desktop learning state.";
+            setStateError(normalizeRuntimeError(message));
+          }
+        });
+    }, 120);
+
+    return () => {
+      disposed = true;
+      window.clearTimeout(timer);
+    };
+  }, [hasDesktopApi, hasHydratedLearningState, lessonHistory, lessonPreview, planPreview, replanPreview]);
 
   function buildLessonRequest(
     plan: PlanContract,
@@ -412,7 +465,7 @@ export default function App() {
             <p className="eyebrow">Learn Bot Desktop</p>
             <h1>让桌面学习面板看起来像产品，而不是日志窗口。</h1>
             <p className="hero-panel__text">
-              当前桌面端聚焦三件事：浏览器登录入口、学习路线图生成，以及基于当前里程碑的课程与恢复路径生成。
+              当前桌面端聚焦三件事：浏览器登录入口、学习路线图生成，以及基于当前里程碑的课程与恢复路径生成。生成结果会自动保存在本机，重启后恢复。
             </p>
           </div>
 
@@ -443,6 +496,13 @@ export default function App() {
           <section className="error-banner" role="alert">
             <p className="error-banner__title">无法打开登录页</p>
             <p>{authError}</p>
+          </section>
+        ) : null}
+
+        {stateError ? (
+          <section className="error-banner" role="alert">
+            <p className="error-banner__title">本地存档异常</p>
+            <p>{stateError}</p>
           </section>
         ) : null}
 

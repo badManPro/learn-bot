@@ -188,6 +188,7 @@
 | The local Codex CLI session can execute desktop prompts successfully when the model is supported | `codex exec` returned valid JSON for both `gpt-5.2-codex` and `gpt-5.4`, while `gpt-5-mini` failed for a ChatGPT-backed Codex session |
 | Learn Bot’s Electron main process could report “Codex CLI not installed” even when the shell had `codex` | The Electron runtime was depending on inherited PATH; explicitly resolving `/usr/local/bin/codex` / `/opt/homebrew/bin/codex` closes that gap on this machine |
 | Desktop `lesson.generate` failed on valid-looking but non-conforming Codex JSON | Added lesson-payload normalization in `apps/desktop/electron-main/ai/codex-cli-client.ts` so arrays/strings/object variants are coerced into `LessonSchema` before parse, and tightened the lesson contract prompt with nested-field requirements |
+| Desktop roadmap / lesson previews were always empty after relaunch | `apps/desktop/renderer/src/App.tsx` only kept generated plan, lesson, history, and replan in React memory; added a main-process JSON store under Electron `userData`, IPC load/save methods, startup hydration, and schema-validated restore so the last desktop state survives restarts |
 
 ## Resources
 - `/Users/casper/Documents/project/test-skills/docs/plans/2026-04-05-ai-learning-assistant-tech-spec.md`

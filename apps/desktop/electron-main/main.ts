@@ -6,6 +6,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import { generateDesktopLesson, generateDesktopPlan, generateDesktopReplan } from "./ai";
 import { getSessionSnapshot, loginWithChatGPT } from "./auth";
 import { ipcChannels } from "./ipc/contracts";
+import { createDesktopLearningStateStore } from "./learning-state";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const preloadEntry = path.join(__dirname, "../preload/preload.mjs");
@@ -66,11 +67,17 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  const learningStateStore = createDesktopLearningStateStore({
+    filePath: path.join(app.getPath("userData"), "desktop-learning-state.json")
+  });
+
   ipcMain.handle(ipcChannels.authLogin, () => loginWithChatGPT());
   ipcMain.handle(ipcChannels.authSessionGet, () => getSessionSnapshot());
   ipcMain.handle(ipcChannels.planGenerate, (_event, input) => generateDesktopPlan(input));
   ipcMain.handle(ipcChannels.planReplan, (_event, input) => generateDesktopReplan(input));
   ipcMain.handle(ipcChannels.lessonGenerate, (_event, input) => generateDesktopLesson(input));
+  ipcMain.handle(ipcChannels.stateLoad, () => learningStateStore.load());
+  ipcMain.handle(ipcChannels.stateSave, (_event, input) => learningStateStore.save(input));
 
   createWindow();
 

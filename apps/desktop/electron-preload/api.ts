@@ -16,6 +16,10 @@ export const desktopApi: DesktopApi = {
   },
   lesson: {
     generate: (input) => ipcRenderer.invoke(ipcChannels.lessonGenerate, input)
+  },
+  state: {
+    load: () => ipcRenderer.invoke(ipcChannels.stateLoad),
+    save: (input) => ipcRenderer.invoke(ipcChannels.stateSave, input)
   }
 };
 
