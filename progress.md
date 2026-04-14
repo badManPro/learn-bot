@@ -932,5 +932,24 @@
   - `pnpm lint` ✅
   - `pnpm build` ✅
 
+### Phase 18: Harden Desktop Lesson Payload Normalization
+- **Status:** complete
+- Actions taken:
+  - Reproduced the reported `lesson:generate` failure as a lesson-schema shape mismatch coming from Codex CLI output, not a button or IPC failure.
+  - Added `normalizeLessonPayload()` in `apps/desktop/electron-main/ai/codex-cli-client.ts` so loose lesson JSON is coerced into the shared `LessonSchema` before parse.
+  - Hardened the lesson contract prompt to specify nested object shapes for `completionContract`, `tasks`, `ifBlocked`, `nextDefaultAction`, and `quiz`.
+  - Added a focused desktop Vitest config and test that covers the exact class of malformed lesson payload reported by the user.
+- Files created/modified:
+  - `apps/desktop/electron-main/ai/codex-cli-client.ts` (updated)
+  - `apps/desktop/electron-main/ai/codex-cli-client.test.ts` (created)
+  - `apps/desktop/vitest.config.ts` (created)
+  - `task_plan.md` (updated)
+  - `findings.md` (updated)
+  - `progress.md` (updated)
+- Verification:
+  - `pnpm exec vitest run --config vitest.config.ts electron-main/ai/codex-cli-client.test.ts` (from `apps/desktop`) ✅
+  - `pnpm --filter @learn-bot/desktop build` ✅
+  - `pnpm lint:desktop` ✅
+
 ---
 *Update after completing each phase or encountering errors*

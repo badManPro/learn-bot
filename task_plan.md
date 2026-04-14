@@ -201,3 +201,4 @@ Phase 5
 - Re-read this plan before major decisions.
 - Log verification evidence before making completion claims.
 - Do not skip the failing-test step for behavior changes.
+- 2026-04-14: Desktop `lesson.generate` needs payload normalization for Codex CLI responses, not just stricter prompt wording. The active fix path is to coerce loose lesson JSON into `LessonSchema` before schema parse and cover it with a desktop-side test.
