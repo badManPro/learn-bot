@@ -4,6 +4,7 @@ import type { LessonContract, PlanContract, ReplanContract, ReplanReason, TodayL
 import type { LessonGenerationRequest, PlanGenerationRequest, ReplanGenerationRequest } from "@learn-bot/ai-orchestrator";
 
 import type { DesktopSession, DesktopSessionStatus } from "../../shared/contracts";
+import { GenerationOverlay } from "./generation-overlay";
 
 const DEFAULT_PLAN_REQUEST: PlanGenerationRequest = {
   goalText: "我想学 Python 做 AI 自动化工作流",
@@ -12,6 +13,38 @@ const DEFAULT_PLAN_REQUEST: PlanGenerationRequest = {
   targetDeadline: "2026-06-30",
   mbti: null
 };
+
+const PLAN_GENERATION_STEPS = [
+  {
+    title: "校验目标与节奏",
+    description: "整理目标、当前基础、每周预算和截止日期。"
+  },
+  {
+    title: "拆成可执行里程碑",
+    description: "把大目标收敛成几个能持续推进的阶段。"
+  },
+  {
+    title: "落到第一课入口",
+    description: "给出 active milestone 和今天的 lesson seed。"
+  }
+] as const;
+
+const LESSON_GENERATION_STEPS = [
+  {
+    title: "读取当前路线图上下文",
+    description: "锁定 active milestone、lesson type 和已有历史。"
+  },
+  {
+    title: "编排任务链路",
+    description: "把课程切成任务、验证方式和完成标准。"
+  },
+  {
+    title: "补齐卡住时的恢复动作",
+    description: "输出 if blocked、quiz checkpoint 和下一步动作。"
+  }
+] as const;
+
+type ActiveGenerationKind = "lesson" | "plan";
 
 function formatDomainLabel(domainId: string) {
   const labels: Record<string, string> = {
@@ -91,6 +124,8 @@ export default function App() {
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [isGeneratingLesson, setIsGeneratingLesson] = useState(false);
   const [isGeneratingReplan, setIsGeneratingReplan] = useState(false);
+  const [activeGenerationKind, setActiveGenerationKind] = useState<ActiveGenerationKind | null>(null);
+  const [activeGenerationStep, setActiveGenerationStep] = useState(0);
 
   useEffect(() => {
     if (!hasDesktopApi) {
@@ -118,6 +153,19 @@ export default function App() {
       disposed = true;
     };
   }, [hasDesktopApi]);
+
+  useEffect(() => {
+    if (!activeGenerationKind) {
+      return undefined;
+    }
+
+    const steps = activeGenerationKind === "plan" ? PLAN_GENERATION_STEPS : LESSON_GENERATION_STEPS;
+    const timer = window.setInterval(() => {
+      setActiveGenerationStep((current) => (current < steps.length - 1 ? current + 1 : current));
+    }, 1100);
+
+    return () => window.clearInterval(timer);
+  }, [activeGenerationKind]);
 
   function buildLessonRequest(
     plan: PlanContract,
@@ -168,6 +216,8 @@ export default function App() {
   async function handleGeneratePlan() {
     setIsGeneratingPlan(true);
     setPlanError(null);
+    setActiveGenerationKind("plan");
+    setActiveGenerationStep(0);
 
     try {
       const nextPlan = await window.desktopApi.plan.generate(DEFAULT_PLAN_REQUEST);
@@ -183,6 +233,7 @@ export default function App() {
       setPlanPreview(null);
     } finally {
       setIsGeneratingPlan(false);
+      setActiveGenerationKind(null);
     }
   }
 
@@ -195,6 +246,8 @@ export default function App() {
 
     setIsGeneratingLesson(true);
     setLessonError(null);
+    setActiveGenerationKind("lesson");
+    setActiveGenerationStep(0);
     const previousLesson = lessonPreview;
     const request = buildLessonRequest(planPreview, overrides);
 
@@ -214,7 +267,22 @@ export default function App() {
       setLessonPreview(null);
     } finally {
       setIsGeneratingLesson(false);
+      setActiveGenerationKind(null);
     }
+  }
+
+  function handlePrimaryLessonClick() {
+    if (!planPreview) {
+      setLessonError("请先生成学习路线图，再生成今日课程。");
+      return;
+    }
+
+    if (!planSupportsInteractiveLesson) {
+      setLessonError(`当前 ${formatDomainLabel(planPreview.domainId)} 只支持路线图预览，暂不支持课程生成。`);
+      return;
+    }
+
+    void handleGenerateLesson();
   }
 
   async function handleGenerateFollowUpLesson() {
@@ -254,6 +322,63 @@ export default function App() {
   const planSupportsInteractiveLesson = Boolean(planPreview && supportsInteractiveDomain(planPreview.domainId));
   const canGenerateFollowUpLesson = Boolean(lessonPreview && planSupportsInteractiveLesson);
   const canRunReplan = Boolean(lessonPreview && planSupportsInteractiveLesson);
+  const generationOverlaySteps = activeGenerationKind === "lesson" ? LESSON_GENERATION_STEPS : PLAN_GENERATION_STEPS;
+  const generationOverlayMeta =
+    activeGenerationKind === "lesson"
+      ? [
+          `领域 ${planPreview ? formatDomainLabel(planPreview.domainId) : "待生成路线图"}`,
+          `里程碑 ${activeMilestone?.title ?? "等待路线图"}`,
+          `课程类型 ${planPreview?.todayLessonSeed.lessonType ?? "未定"}`
+        ]
+      : [
+          DEFAULT_PLAN_REQUEST.goalText,
+          `每周 ${DEFAULT_PLAN_REQUEST.weeklyTimeBudgetMinutes} 分钟`,
+          `截止 ${DEFAULT_PLAN_REQUEST.targetDeadline}`
+        ];
+  const generationOverlayCards =
+    activeGenerationKind === "lesson"
+      ? [
+          {
+            eyebrow: "Lesson Frame",
+            title: lessonPreview?.title ?? activeMilestone?.title ?? "今日课程骨架",
+            bullets: ["生成 why this now", "串起任务节奏和完成标准"]
+          },
+          {
+            eyebrow: "Tasks",
+            title: "任务拆解中",
+            bullets: ["安排 2-6 个任务块", "附带验证方式与预计时长"]
+          },
+          {
+            eyebrow: "Recovery",
+            title: "恢复路径注入",
+            bullets: ["补全 if blocked", "生成 quiz 与下一步动作"]
+          }
+        ]
+      : [
+          {
+            eyebrow: "Milestone 1",
+            title: "起步定位",
+            bullets: ["锁定起点与依赖", "确保第一周能快速进入状态"]
+          },
+          {
+            eyebrow: "Milestone 2",
+            title: "核心突破",
+            bullets: ["围绕目标堆叠关键技能", "保持每周推进节奏"]
+          },
+          {
+            eyebrow: "Milestone 3",
+            title: "实战收口",
+            bullets: ["落成完整闭环", "衔接到今天第一课"]
+          }
+        ];
+  const generationOverlayTitle =
+    activeGenerationKind === "lesson"
+      ? `正在生成${planPreview ? formatDomainLabel(planPreview.domainId) : ""}今日课程`
+      : "正在生成学习路线图";
+  const generationOverlayDescription =
+    activeGenerationKind === "lesson"
+      ? "系统正在读取当前路线图，拼接任务、完成标准和卡住后的恢复动作。"
+      : "系统正在把目标拆成里程碑、周节奏和第一课入口，完成后会立即刷新预览。";
   const loginButtonLabel =
     sessionState === "authenticated"
       ? "检查 Codex 登录状态"
@@ -267,6 +392,17 @@ export default function App() {
 
   return (
     <main className="app-shell">
+      <GenerationOverlay
+        activeStep={activeGenerationStep}
+        cards={generationOverlayCards}
+        description={generationOverlayDescription}
+        eyebrow={activeGenerationKind === "lesson" ? "Lesson.generate" : "Plan.generate"}
+        isOpen={Boolean(activeGenerationKind)}
+        meta={generationOverlayMeta}
+        steps={generationOverlaySteps}
+        title={generationOverlayTitle}
+      />
+
       <div className="app-shell__glow app-shell__glow--violet" />
       <div className="app-shell__glow app-shell__glow--amber" />
 
@@ -460,13 +596,17 @@ export default function App() {
               <div className="button-group">
                 <button
                   className="button button--secondary"
-                  disabled={!planSupportsInteractiveLesson || isGeneratingLesson}
-                  onClick={() => void handleGenerateLesson()}
+                  disabled={isGeneratingLesson}
+                  onClick={handlePrimaryLessonClick}
                   type="button"
                 >
                   {isGeneratingLesson
                     ? "生成中..."
-                    : `生成${planPreview ? formatDomainLabel(planPreview.domainId) : ""}课程`}
+                    : !planPreview
+                      ? "先生成路线图"
+                      : !planSupportsInteractiveLesson
+                        ? "当前领域不支持课程"
+                        : `生成${formatDomainLabel(planPreview.domainId)}课程`}
                 </button>
                 <button
                   className="button button--ghost"
@@ -498,6 +638,10 @@ export default function App() {
                   <strong>{lessonHistory.length}</strong>
                 </div>
               </div>
+            ) : null}
+
+            {!planPreview ? (
+              <div className="inline-alert inline-alert--neutral">先生成路线图，今日课程才会拿到里程碑和 lesson seed。</div>
             ) : null}
 
             {planPreview && !planSupportsInteractiveLesson ? (
